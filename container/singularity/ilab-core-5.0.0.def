@@ -1,0 +1,49 @@
+## Generate core container with ilab-specific dependencies that builds on the Python ecosystem container
+Bootstrap: localimage
+FROM: ./cisto-data-science-3.0.0.simg
+%labels
+    Author gtamkin
+    Version v1.0.0
+
+%help
+===========================================================================
+	- ilab-core (extends -> python3-data-science) – contains GIS & ilab dependencies:
+		a.	GDAL
+		b.	Celery
+		c.  	Redis (Celery server)
+===========================================================================
+
+%environment
+    # set PYTHONPATH for access to ILProcessController
+    export PYTHONPATH="$PYTHONPATH:/usr/local/celery"
+
+%post
+
+    # install GDAL
+    apt-get update
+    apt-get install -y gdal-bin
+    apt-get install -y libgdal-dev
+    export CPLUS_INCLUDE_PATH=/usr/include/gdal
+    export C_INCLUDE_PATH=/usr/include/gdal
+    gdal-config --version
+
+    #pip install GDAL
+    python -m pip install --global-option=build_ext --global-option="-I/usr/include/gdal" GDAL==2.1.3
+    gdal-config --version
+    python -c 'from osgeo import gdal; print(gdal.__version__)'
+
+
+    # install Celery
+    python -m pip install --upgrade celery[redis]==4.3.0
+
+    # install Redis & Flower (Celery server dependencies)
+    python -m pip install --upgrade redis==3.4.1
+    python -m pip install --upgrade redis-server==5.0.7 
+    python -m pip install --upgrade flower==0.9.4
+    cd /usr/local/bin
+    ln -sf /usr/local/lib/python3.7/site-packages/redis_server/bin/redis-server .
+
+    # retrieve IL Celery automation source from git repository and open permissions
+    mkdir -p /usr/local/celery
+    git clone --single-branch --branch MmxRequestCeleryView https://github.com/nasa-nccs-hpda/innovation-lab.git /usr/local/celery
+    chmod a+rwx -R /usr/local/celery
