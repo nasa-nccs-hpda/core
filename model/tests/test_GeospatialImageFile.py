@@ -20,8 +20,9 @@ from core.model.ImageFile import ImageFile
 # -----------------------------------------------------------------------------
 # class GeospatialImageFileTestCase
 #
+# singularity shell -B /att /att/nobackup/iluser/containers/ilab-core-5.0.0.simg
+# cd to the directory containing core
 # export PYTHONPATH=`pwd`
-#
 # python -m unittest discover model/tests/
 # python -m unittest model.tests.test_GeospatialImageFile
 # -----------------------------------------------------------------------------
@@ -322,3 +323,92 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # Delete the test file.
         os.remove(imageFile.fileName())
+
+    # -------------------------------------------------------------------------
+    # testImageToGround
+    # -------------------------------------------------------------------------
+    def testImageToGround(self):
+        
+        imageFile = self._createTestFile()
+        xSize = imageFile._getDataset().RasterXSize
+        ySize = imageFile._getDataset().RasterYSize
+        
+        # Upper-left
+        ulImage = (0, 0)
+        groundPt = imageFile.imageToGround(ulImage[0], ulImage[1])
+        ulGround = (-125.3125,  50.25)  # from gdalinfo
+        self.assertEqual(groundPt, ulGround)
+
+        # Lower-left
+        llImage = (0, ySize)
+        groundPt = imageFile.imageToGround(llImage[0], llImage[1])
+        llGround = (-125.3125,  23.75)
+        self.assertEqual(groundPt, llGround)
+
+        # Upper-right
+        urImage = (xSize, 0)
+        groundPt = imageFile.imageToGround(urImage[0], urImage[1])
+        urGround = (-65.9375, 50.25)
+        self.assertEqual(groundPt, urGround)
+
+        # Lower-right
+        lrImage = (xSize, ySize)
+        groundPt = imageFile.imageToGround(lrImage[0], lrImage[1])
+        lrGround = (-65.9375000,  23.75)
+        self.assertEqual(groundPt, lrGround)
+        
+        # Center
+        cImage = (xSize/2, ySize/2)
+        groundPt = imageFile.imageToGround(cImage[0], cImage[1])
+        cGround = (-95.625,  37.0)
+        self.assertEqual(groundPt, cGround)
+        
+        os.remove(imageFile.fileName())
+        
+    # -------------------------------------------------------------------------
+    # testGroundToImage
+    # -------------------------------------------------------------------------
+    def testGroundToImage(self):
+        
+        imageFile = self._createTestFile()
+        xSize = imageFile._getDataset().RasterXSize
+        ySize = imageFile._getDataset().RasterYSize
+        
+        # Upper-left
+        ulGround = (-125.3125,  50.25)  # from gdalinfo
+        imagePt = imageFile.groundToImage(ulGround[0], ulGround[1])
+        ulImage = (0, 0)
+        self.assertEqual(imagePt, ulImage)
+
+        # Lower-left
+        llGround = (-125.3125,  23.75)
+        imagePt = imageFile.groundToImage(llGround[0], llGround[1])
+        llImage = (0, ySize)
+        self.assertEqual(imagePt, llImage)
+
+        # Upper-right
+        urGround = (-65.9375, 50.25)
+        imagePt = imageFile.groundToImage(urGround[0], urGround[1])
+        urImage = (xSize, 0)
+        self.assertEqual(imagePt, urImage)
+
+        # Lower-right
+        lrGround = (-65.9375000,  23.75)
+        imagePt = imageFile.groundToImage(lrGround[0], lrGround[1])
+        lrImage = (xSize, ySize)
+        self.assertEqual(imagePt, lrImage)
+
+        # Center
+        cGround = (-95.625,  37.0)
+        imagePt = imageFile.groundToImage(cGround[0], cGround[1])
+        cImage = (int(xSize/2), int(ySize/2))
+        self.assertEqual(imagePt, cImage)
+        
+        # Round-trip
+        cImage = (xSize/2, ySize/2)
+        groundPt = imageFile.imageToGround(cImage[0], cImage[1])
+        self.assertEqual(groundPt, cGround)
+
+        os.remove(imageFile.fileName())
+        
+        

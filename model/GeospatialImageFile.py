@@ -130,6 +130,28 @@ class GeospatialImageFile(ImageFile):
         return envelope
 
     # -------------------------------------------------------------------------
+    # imageToGround
+    # -------------------------------------------------------------------------
+    def imageToGround(self, imageX, imageY):
+        
+        gt = self._getDataset().GetGeoTransform()
+        x = (imageX * gt[1]) + gt[0]
+        y = (imageY * gt[5]) + gt[3]
+        
+        return (x, y)
+        
+    # -------------------------------------------------------------------------
+    # groundToImage
+    # -------------------------------------------------------------------------
+    def groundToImage(self, groundX, groundY):
+        
+        gt = self._getDataset().GetGeoTransform()
+        col = int((groundX - gt[0]) / gt[1]) 
+        row = int((groundY - gt[3]) / gt[5])
+        
+        return (col, row)
+        
+    # -------------------------------------------------------------------------
     # getSquareScale
     #
     # Some ASCII image variants cannot represent pixel size in two dimensions.
