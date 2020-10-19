@@ -29,7 +29,11 @@ class GeospatialImageFile(ImageFile):
         # Initialize the base class.
         super(GeospatialImageFile, self).__init__(pathToFile)
 
+        self.logger = logger
+
         # Initialize the spatial reference.
+        self._srs = None
+        
         if not spatialReference:
 
             spatialReferenceWkt = self._getDataset().GetProjection()
@@ -48,8 +52,6 @@ class GeospatialImageFile(ImageFile):
                               ' -multi' + \
                               ' -of netCDF' + \
                               ' -s_srs "' + self.srs().ExportToProj4() + '"'
-
-#        self.logger = logger
 
     # -------------------------------------------------------------------------
     # clipReproject
@@ -99,8 +101,7 @@ class GeospatialImageFile(ImageFile):
         # Finish the command.
         outFile = tempfile.mkstemp()[1]
         cmd += ' ' + dataset + ' ' + outFile
-        SystemCommand(cmd, None, True)
-#        SystemCommand(cmd, self.logger, True)
+        SystemCommand(cmd, self.logger, True)
 
         shutil.move(outFile, self._filePath)
 
