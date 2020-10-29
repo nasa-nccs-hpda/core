@@ -1,0 +1,65 @@
+## Generate core container with ilab-specific dependencies that builds on the Python ecosystem container
+Bootstrap: localimage
+#FROM: ./ilab-core-7.0.0.simg
+FROM: ./cisto-data-science-3.0.0.simg
+%labels
+    Author gtamkin
+    Version v1.0.0
+
+%help
+===========================================================================
+	- ilab-core (extends -> python3-data-science) – contains GIS & ilab dependencies:
+		a.	GDAL
+		b.	Celery
+		c.  Redis (Celery server)
+===========================================================================
+
+%environment
+    # set PYTHONPATH for access to ILProcessController
+    export PYTHONPATH="$PYTHONPATH:/usr/local/core"
+
+%post
+
+    # install GDAL
+    apt-get update
+
+    # install GDAL 2.2.2 (as per Roger's request for EVHR)
+    wget http://download.osgeo.org/gdal/2.2.2/gdal-2.2.2.tar.gz
+    tar -xvzf gdal-2.2.2.tar.gz
+    cd gdal-2.2.2
+
+    ./configure --prefix=/usr
+    make
+
+    apt-get install checkinstall
+    checkinstall
+
+    gdal-config --version
+#    python -c 'from osgeo import gdal; print(gdal.__version__)'
+
+    #pip install GDAL
+    python -m pip install --upgrade pip==20.2.4
+
+    which python
+    python -V
+    gdal-config --version
+#    python -c 'from osgeo import gdal; print(gdal.__version__)'
+    pip install pygdal==2.2.2.6
+    gdal-config --version
+#    python -c 'from osgeo import gdal; print(gdal.__version__)'
+
+
+    # install Celery
+    python -m pip install --upgrade celery[redis]==4.3.1
+
+    # install Redis & Flower (Celery server dependencies)
+    python -m pip install --upgrade redis==3.4.1
+    python -m pip install --upgrade redis-server==5.0.7 
+    python -m pip install --upgrade flower==0.9.4
+    cd /usr/local/bin
+    ln -sf /usr/local/lib/python3.7/site-packages/redis_server/bin/redis-server .
+
+    # retrieve IL Celery automation source from git repository and open permissions
+    mkdir -p /usr/local/core
+    git clone --single-branch --branch master https://github.com/nasa-nccs-hpda/core.git /usr/local/core
+    chmod a+rwx -R /usr/local/core
