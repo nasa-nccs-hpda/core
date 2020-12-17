@@ -204,7 +204,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         #                  imageFile2.srs().ExportToProj4())
 
         self.assertEqual(imageFile2.srs().ExportToProj4(),
-                         '+proj=longlat +datum=WGS84 +no_defs ')
+                         '+proj=longlat +datum=WGS84 +no_defs')
 
         os.remove(imageFile.fileName())
         os.remove(workingCopy)
