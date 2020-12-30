@@ -11,6 +11,7 @@ import unittest
 from osgeo import gdal
 from osgeo import gdalconst
 from osgeo.osr import SpatialReference
+from osgeo import osr
 
 from core.model.Envelope import Envelope
 from core.model.GeospatialImageFile import GeospatialImageFile
@@ -20,26 +21,46 @@ from core.model.ImageFile import ImageFile
 # -----------------------------------------------------------------------------
 # class GeospatialImageFileTestCase
 #
-# singularity shell -B /att /att/nobackup/iluser/containers/ilab-core-5.0.0.simg
-# cd to the directory containing core
 # export PYTHONPATH=`pwd`
+#
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_GeospatialImageFile
+# python -m unittest core.model.tests.test_GeospatialImageFile
 # -----------------------------------------------------------------------------
 class GeospatialImageFileTestCase(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     # createTestFile
     # -------------------------------------------------------------------------
-    def _createTestFile(self):
+    def _createTestFile(self, createUTM=False):
 
-        testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                'TSURF.nc')
+        testFile = None
+        
+        if createUTM:
+            
+            testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'gsenm_250m_eucl_dist_streams.tif')
+                                
+            workingCopy = tempfile.mkstemp(suffix='.nc')[1]
+            shutil.copyfile(testFile, workingCopy)
 
-        workingCopy = tempfile.mkstemp(suffix='.nc')[1]
-        shutil.copyfile(testFile, workingCopy)
-        srs = SpatialReference()
-        srs.ImportFromEPSG(4326)
+            srs = SpatialReference()
+            srs.ImportFromEPSG(32612)
+
+        else:
+            testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    'TSURF.nc')
+
+            workingCopy = tempfile.mkstemp(suffix='.nc')[1]
+            shutil.copyfile(testFile, workingCopy)
+
+            # ---
+            # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/
+            # MIGRATION_GUIDE.TXT
+            # ---
+            srs = SpatialReference()
+            srs.ImportFromEPSG(4326)
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         return GeospatialImageFile(workingCopy, srs)
 
     # -------------------------------------------------------------------------
@@ -47,51 +68,115 @@ class GeospatialImageFileTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testClipReproject(self):
 
-        # Build the test file.
+        # ---
+        # Test only clipping.
+        # ---
+        imageFile = self._createTestFile()
+
+        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+        ulx = -120
+        uly = 48
+        lrx = -119
+        lry = 47
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        imageFile.clipReproject(env)
+
+        # Check the result.
+        xform = imageFile._getDataset().GetGeoTransform()
+        xScale = xform[1]
+        yScale = xform[5]
+        width = imageFile._getDataset().RasterXSize
+        height = imageFile._getDataset().RasterYSize
+        clippedUlx = xform[0]
+        clippedUly = xform[3]
+        clippedLrx = clippedUlx + width * xScale
+        clippedLry = clippedUly + height * yScale
+
+        self.assertAlmostEqual(clippedUlx, ulx)
+        self.assertAlmostEqual(clippedUly, uly)
+        self.assertAlmostEqual(clippedLrx, lrx)
+        self.assertAlmostEqual(clippedLry, lry)
+
+        os.remove(imageFile.fileName())
+        
+        # ---
+        # Test only reprojection.
+        # ---
+        imageFile = self._createTestFile(createUTM=True)
+        targetSRS = SpatialReference()
+        targetSRS.ImportFromEPSG(4326)
+        targetSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        imageFile.clipReproject(None, targetSRS)
+
+        # gdaltransform confirms these expected values.
+        self.assertTrue(imageFile.srs().IsSame(targetSRS))
+        
+        self.assertAlmostEqual(imageFile.envelope().ulx(),
+                               -112.514404154969, 
+                               places=8)
+                               
+        self.assertAlmostEqual(imageFile.envelope().uly(), 
+                               38.03, 
+                               places=2)
+                               
+        self.assertAlmostEqual(imageFile.envelope().lrx(), 
+                               -110.89, 
+                               places=2)
+                               
+        self.assertAlmostEqual(imageFile.envelope().lry(), 
+                               37.0019181544673, 
+                               places=0)
+
+        os.remove(imageFile.fileName())
+
+        # ---
+        # Test clipping and reprojection.
+        # ---
         imageFile = self._createTestFile()
 
         # Build the envelope.
-        ulx = 367080
-        uly = 4209230
-        lrx = 509200
-        lry = 4095100
         srs = SpatialReference()
-        srs.ImportFromEPSG(32612)
+        srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+        ulx = -120
+        uly = 48
+        lrx = -119
+        lry = 47
         env = Envelope()
         env.addPoint(ulx, uly, 0, srs)
         env.addPoint(lrx, lry, 0, srs)
 
         # Reprojection parameter
         targetSRS = SpatialReference()
-        targetSRS.ImportFromEPSG(4326)
+        targetSRS.ImportFromEPSG(32611)
 
         # Clip, reproject and resample.
-        imageFile.clipReproject(env, targetSRS,)
+        imageFile.clipReproject(env, targetSRS)
 
         # Check the results.
-        dataset = gdal.Open(imageFile.fileName(), gdalconst.GA_ReadOnly)
-
-        if not dataset:
-            raise RuntimeError('Unable to read ' + imageFile.fileName() + '.')
-
-        xform = dataset.GetGeoTransform()
+        xform = imageFile._getDataset().GetGeoTransform()
         xScale = xform[1]
         yScale = xform[5]
-        width = dataset.RasterXSize
-        height = dataset.RasterYSize
+        width = imageFile._getDataset().RasterXSize
+        height = imageFile._getDataset().RasterYSize
         clippedUlx = xform[0]
         clippedUly = xform[3]
         clippedLrx = clippedUlx + width * xScale
         clippedLry = clippedUly + height * yScale
 
-        self.assertAlmostEqual(clippedUlx, -112.49369402670872, places=12)
-        self.assertAlmostEqual(clippedUly, 38.03073206024332, places=11)
-        self.assertAlmostEqual(clippedLrx, -110.89516946364738, places=12)
-        self.assertAlmostEqual(clippedLry, 36.99265291293727, places=11)
-
-        outSRS = SpatialReference()
-        outSRS.ImportFromWkt(dataset.GetProjection())
-        self.assertTrue(outSRS.IsSame(targetSRS))
+        self.assertTrue(imageFile.srs().IsSame(targetSRS))
+        self.assertAlmostEqual(clippedUlx, 271930.435, places=3)
+        self.assertAlmostEqual(clippedUly, 5318235.614, places=3)
+        self.assertAlmostEqual(clippedLrx, 350812.125, places=3)
+        self.assertAlmostEqual(clippedLry, 5209532.848, places=3)
 
         # Delete the test file.
         os.remove(imageFile.fileName())
@@ -151,6 +236,9 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # Test envelope.
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
+        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         expectedEnvelope = Envelope()
         expectedEnvelope.addPoint(-125.3125000,  50.25, 0, srs)
         expectedEnvelope.addPoint(-65.9375000,  23.75, 0, srs)
@@ -200,8 +288,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # one from which it imports, so we cannot simply compare the round-
         # trip getstate and setstate srs.
         #---
-        # self.assertEqual(imageFile.srs().ExportToProj4(),
-        #                  imageFile2.srs().ExportToProj4())
+        # self.assertEqual(imageFile.GetSpatialRef().ExportToProj4(),
+        #                  imageFile2.GetSpatialRef().ExportToProj4())
 
         self.assertEqual(imageFile2.srs().ExportToProj4(),
                          '+proj=longlat +datum=WGS84 +no_defs')
@@ -250,7 +338,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # Reproject.
         targetSRS = SpatialReference()
-        targetSRS.ImportFromEPSG(4326)
+        targetSRS.ImportFromEPSG(32610)
+
         imageFile.clipReproject(outputSRS=targetSRS)
 
         # Check the SRS.
@@ -259,9 +348,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         if not dataset:
             raise RuntimeError('Unable to read ' + imageFile.fileName() + '.')
 
-        outSRS = SpatialReference()
-        outSRS.ImportFromWkt(dataset.GetProjection())
-        self.assertTrue(outSRS.IsSame(targetSRS))
+        self.assertTrue(dataset.GetSpatialRef().IsSame(targetSRS))
 
         # Delete the test file.
         os.remove(imageFile.fileName())
@@ -319,96 +406,11 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # Check the srs.
         expectedSRS = SpatialReference()
         expectedSRS.ImportFromEPSG(4326)
+
+        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
+        expectedSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         self.assertTrue(imageFile.srs().IsSame(expectedSRS))
 
         # Delete the test file.
         os.remove(imageFile.fileName())
-
-    # -------------------------------------------------------------------------
-    # testImageToGround
-    # -------------------------------------------------------------------------
-    def testImageToGround(self):
-        
-        imageFile = self._createTestFile()
-        xSize = imageFile._getDataset().RasterXSize
-        ySize = imageFile._getDataset().RasterYSize
-        
-        # Upper-left
-        ulImage = (0, 0)
-        groundPt = imageFile.imageToGround(ulImage[0], ulImage[1])
-        ulGround = (-125.3125,  50.25)  # from gdalinfo
-        self.assertEqual(groundPt, ulGround)
-
-        # Lower-left
-        llImage = (0, ySize)
-        groundPt = imageFile.imageToGround(llImage[0], llImage[1])
-        llGround = (-125.3125,  23.75)
-        self.assertEqual(groundPt, llGround)
-
-        # Upper-right
-        urImage = (xSize, 0)
-        groundPt = imageFile.imageToGround(urImage[0], urImage[1])
-        urGround = (-65.9375, 50.25)
-        self.assertEqual(groundPt, urGround)
-
-        # Lower-right
-        lrImage = (xSize, ySize)
-        groundPt = imageFile.imageToGround(lrImage[0], lrImage[1])
-        lrGround = (-65.9375000,  23.75)
-        self.assertEqual(groundPt, lrGround)
-        
-        # Center
-        cImage = (xSize/2, ySize/2)
-        groundPt = imageFile.imageToGround(cImage[0], cImage[1])
-        cGround = (-95.625,  37.0)
-        self.assertEqual(groundPt, cGround)
-        
-        os.remove(imageFile.fileName())
-        
-    # -------------------------------------------------------------------------
-    # testGroundToImage
-    # -------------------------------------------------------------------------
-    def testGroundToImage(self):
-        
-        imageFile = self._createTestFile()
-        xSize = imageFile._getDataset().RasterXSize
-        ySize = imageFile._getDataset().RasterYSize
-        
-        # Upper-left
-        ulGround = (-125.3125,  50.25)  # from gdalinfo
-        imagePt = imageFile.groundToImage(ulGround[0], ulGround[1])
-        ulImage = (0, 0)
-        self.assertEqual(imagePt, ulImage)
-
-        # Lower-left
-        llGround = (-125.3125,  23.75)
-        imagePt = imageFile.groundToImage(llGround[0], llGround[1])
-        llImage = (0, ySize)
-        self.assertEqual(imagePt, llImage)
-
-        # Upper-right
-        urGround = (-65.9375, 50.25)
-        imagePt = imageFile.groundToImage(urGround[0], urGround[1])
-        urImage = (xSize, 0)
-        self.assertEqual(imagePt, urImage)
-
-        # Lower-right
-        lrGround = (-65.9375000,  23.75)
-        imagePt = imageFile.groundToImage(lrGround[0], lrGround[1])
-        lrImage = (xSize, ySize)
-        self.assertEqual(imagePt, lrImage)
-
-        # Center
-        cGround = (-95.625,  37.0)
-        imagePt = imageFile.groundToImage(cGround[0], cGround[1])
-        cImage = (int(xSize/2), int(ySize/2))
-        self.assertEqual(imagePt, cImage)
-        
-        # Round-trip
-        cImage = (xSize/2, ySize/2)
-        groundPt = imageFile.imageToGround(cImage[0], cImage[1])
-        self.assertEqual(groundPt, cGround)
-
-        os.remove(imageFile.fileName())
-        
-        

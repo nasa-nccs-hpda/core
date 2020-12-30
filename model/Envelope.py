@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from osgeo import ogr
+from osgeo.osr import CoordinateTransformation
 from osgeo.osr import SpatialReference
 
 
@@ -84,42 +85,36 @@ class Envelope(ogr.Geometry):
                    otherEnvelope.GetSpatialReference())
 
     # -------------------------------------------------------------------------
-    # _getOrdinate
-    # -------------------------------------------------------------------------
-    def _getOrdinate(self, index):
-
-        if index < 0 or index > 3:
-            raise RuntimeError('Index must be between 0 and 3.')
-
-        return self.GetEnvelope()[index]
-
-    # -------------------------------------------------------------------------
     # lrx
     # -------------------------------------------------------------------------
     def lrx(self):
 
-        return self._getOrdinate(1)
+        # return self._getOrdinate(1)
+        return self.GetEnvelope()[1]
 
     # -------------------------------------------------------------------------
     # lry
     # -------------------------------------------------------------------------
     def lry(self):
 
-        return self._getOrdinate(2)
+        # return self._getOrdinate(2)
+        return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
     # ulx
     # -------------------------------------------------------------------------
     def ulx(self):
 
-        return self._getOrdinate(0)
+        # return self._getOrdinate(0)
+        return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
     # uly
     # -------------------------------------------------------------------------
     def uly(self):
 
-        return self._getOrdinate(3)
+        # return self._getOrdinate(3)
+        return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------
     # __setstate__

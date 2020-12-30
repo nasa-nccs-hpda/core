@@ -5,7 +5,6 @@ import struct
 
 import numpy as np
 
-from osgeo import gdal_array
 from osgeo import gdalconst
 
 from core.model.ImageFile import ImageFile

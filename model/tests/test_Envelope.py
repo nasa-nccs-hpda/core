@@ -5,6 +5,7 @@ import unittest
 
 from osgeo import ogr
 from osgeo.osr import SpatialReference
+from osgeo import osr
 
 from core.model.Envelope import Envelope
 
@@ -146,3 +147,34 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertEqual(env.uly(), env2.uly())
         self.assertEqual(env.lrx(), env2.lrx())
         self.assertEqual(env.lry(), env2.lry())
+
+    # -------------------------------------------------------------------------
+    # testTransformTo
+    # -------------------------------------------------------------------------
+    def testTransformTo(self):
+        
+        ulx = 626002.2463251714         # 94.19
+        uly = 2145525.859757114         # 19.40
+        lrx = 668316.2848759613         # 94.59
+        lry = 2112661.4394026464        # 19.10
+
+        srs = SpatialReference()
+        srs.ImportFromEPSG(32646)
+
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        targetSrs = SpatialReference()
+        targetSrs.ImportFromEPSG(4326)
+
+        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
+        targetSrs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+        env.TransformTo(targetSrs)
+
+        self.assertAlmostEqual(94.199, env.ulx(), places=2)
+        self.assertAlmostEqual(19.400, env.uly(), places=2)
+        self.assertAlmostEqual(94.599, env.lrx(), places=2)
+        self.assertAlmostEqual(19.100, env.lry(), places=2)
+        

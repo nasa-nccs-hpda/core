@@ -10,7 +10,7 @@ from core.model.BaseFile import BaseFile
 # class BaseFileTestCase
 #
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_BaseFile
+# python -m unittest core.model.tests.test_BaseFile
 # -----------------------------------------------------------------------------
 class BaseFileTestCase(unittest.TestCase):
 
