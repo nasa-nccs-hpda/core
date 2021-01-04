@@ -119,20 +119,20 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         self.assertTrue(imageFile.srs().IsSame(targetSRS))
         
         self.assertAlmostEqual(imageFile.envelope().ulx(),
-                               -112.514404154969, 
-                               places=8)
+                               -112.5144042, 
+                               places=7)
                                
         self.assertAlmostEqual(imageFile.envelope().uly(), 
-                               38.03, 
-                               places=2)
+                               38.0308143, 
+                               places=7)
                                
         self.assertAlmostEqual(imageFile.envelope().lrx(), 
-                               -110.89, 
-                               places=2)
+                               -110.8938763, 
+                               places=7)
                                
         self.assertAlmostEqual(imageFile.envelope().lry(), 
-                               37.0019181544673, 
-                               places=0)
+                               36.9934700, 
+                               places=7)
 
         os.remove(imageFile.fileName())
 

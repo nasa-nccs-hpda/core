@@ -41,11 +41,6 @@ class FootprintsQuery(object):
         self.usePanchromatic = True
         self.useSwir = False
 
-        # self.ulx = None
-        # self.uly = None
-        # self.lrx = None
-        # self.lry = None
-        # self.srs = None
         self._envelope = None
 
     # -------------------------------------------------------------------------
@@ -60,9 +55,6 @@ class FootprintsQuery(object):
         # ---
         targetSRS = SpatialReference()
         targetSRS.ImportFromEPSG(4326)
-
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-        targetSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
         if not envelope.GetSpatialReference().IsSame(targetSRS):
             envelope.TransformTo(targetSRS)
