@@ -246,7 +246,7 @@ class DgFile(GeospatialImageFile):
                   ' -a_nodata 0' + \
                   ' -strict' + \
                   ' -mo "bandName={}"'.format(bandName) + \
-                  ' ' + self.fileName + \
+                  ' ' + self.fileName() + \
                   ' ' + tempBandFile
 
             sCmd = SystemCommand(cmd, self.fileName, self.logger)
