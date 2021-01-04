@@ -249,7 +249,7 @@ class DgFile(GeospatialImageFile):
                   ' ' + self.fileName() + \
                   ' ' + tempBandFile
 
-            sCmd = SystemCommand(cmd, self.fileName, self.logger)
+            sCmd = SystemCommand(cmd, self.logger)
 
             if sCmd.returnCode:
                 tempBandFile = None
