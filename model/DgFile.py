@@ -86,7 +86,7 @@ class DgFile(GeospatialImageFile):
             # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
             srs = SpatialReference()
             srs.ImportFromEPSG(4326)
-            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            # srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
             self._dataset.SetSpatialRef(srs)
 
             # ---
