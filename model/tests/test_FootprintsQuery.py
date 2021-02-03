@@ -49,7 +49,6 @@ class FootprintsQueryTestCase(unittest.TestCase):
         uly = 2145525.859757114
         lrx = 668316.2848759613
         lry = 2112661.4394026464
-
         srs = SpatialReference()
         srs.ImportFromEPSG(32646)
 
@@ -77,16 +76,13 @@ class FootprintsQueryTestCase(unittest.TestCase):
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
 
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
+        # Axis order for 4326 is backwards.
         env = Envelope()
-        env.addPoint(ulx, uly, 0, srs)
-        env.addPoint(lrx, lry, 0, srs)
+        env.addPoint(uly, ulx, 0, srs)
+        env.addPoint(lry, lrx, 0, srs)
 
         fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
         fpq.addAoI(env)
-        fpq.setPairsOnly()
         numScenes = 27
         fpq.setMaximumScenes(numScenes)
         fpScenes1 = fpq.getScenes()

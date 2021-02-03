@@ -60,7 +60,7 @@ class FootprintsQuery(object):
             envelope.TransformTo(targetSRS)
 
         self._envelope = envelope
-        
+
     # -------------------------------------------------------------------------
     # addCatalogID
     # -------------------------------------------------------------------------
@@ -163,15 +163,15 @@ class FootprintsQuery(object):
 
         if not self.useSwir:
             whereClause += ' AND (SPEC_TYPE <> \'SWIR\')'
-            
+
         # AoI
         if self._envelope:
 
-            #---
-            # To filter scenes that only overlap the AoI slightly, decrease both
-            # corners of the query AoI.
+            # ---
+            # To filter scenes that only overlap the AoI slightly, decrease
+            # both corners of the query AoI.
             # https://desktop.arcgis.com/en/arcmap/10.3/manage-data/using-sql-with-gdbs/st-intersects.htm
-            #---
+            # ---
             ulx = float(self._envelope.ulx()) + self._minOverlapInDegrees
             uly = float(self._envelope.uly()) - self._minOverlapInDegrees
             lrx = float(self._envelope.lrx()) - self._minOverlapInDegrees
@@ -181,11 +181,11 @@ class FootprintsQuery(object):
             expandedEnv = Envelope()
             expandedEnv.addPoint(ulx, uly, 0, srs)
             expandedEnv.addPoint(lrx, lry, 0, srs)
-            
+
             whereClause += ' AND (st_intersects(shape, ' + \
                            '\'' + expandedEnv.ExportToWkt() + '\'' + \
                            ') = \'t\')'
-            
+
         return unicode(whereClause)
 
     # -------------------------------------------------------------------------
@@ -194,7 +194,7 @@ class FootprintsQuery(object):
     def getScenes(self):
 
         return self.getScenesFromGdb()
-        
+
     # -------------------------------------------------------------------------
     # getScenesFromPostgres
     # -------------------------------------------------------------------------
@@ -291,41 +291,41 @@ class FootprintsQuery(object):
     # setSwirOn
     # -------------------------------------------------------------------------
     def setSwirOn(self):
-        
+
         self.useSwir = True
-     
-    #---------------------------------------------------------------------------
+
+    # -------------------------------------------------------------------------
     # getScenesFromGdb
-    #---------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def getScenesFromGdb(self):
 
         # Compose query.
         cmd = FootprintsQuery.BASE_QUERY
-        
+
         if self.maxScenes > 0:
             cmd += ' -limit ' + str(self.maxScenes)
 
         if self._envelope:
 
-            #---
-            # To filter scenes that only overlap the AoI slightly, decrease both
-            # corners of the query AoI.
-            #---
+            # ---
+            # To filter scenes that only overlap the AoI slightly, decrease
+            # both corners of the query AoI.
+            # ---
             ulx = float(self._envelope.ulx()) + self._minOverlapInDegrees
             uly = float(self._envelope.uly()) - self._minOverlapInDegrees
             lrx = float(self._envelope.lrx()) - self._minOverlapInDegrees
             lry = float(self._envelope.lry()) + self._minOverlapInDegrees
-        
+
             cmd += ' -spat' + \
                    ' ' + str(ulx) + \
                    ' ' + str(lry) + \
                    ' ' + str(lrx) + \
-                   ' ' + str(uly)                   
-                   
+                   ' ' + str(uly)
+
         where = self._buildWhereClauseGdb()
 
         if len(where):
-            
+
             # cmd += unicode(' -sql "select * from nga_inventory_canon ') + \
             #        where + \
             #        unicode(' order by ACQ_DATE DESC"')
@@ -336,36 +336,36 @@ class FootprintsQuery(object):
 
         fpFile = '/css/nga/INDEX/Footprints/current/newest/' + \
                  'geodatabase/nga_inventory_canon.gdb'
-                 
+
         queryResult = tempfile.mkstemp()[1]
         cmd += ' "' + queryResult + '"  "' + fpFile + '" '
         SystemCommand(cmd, logger=self.logger, raiseException=True)
-                      
+
         resultGML = minidom.parse(queryResult)
         features = resultGML.getElementsByTagName('gml:featureMember')
         dgFileNames = []
-        
+
         for feature in features:
-            
+
             dgFileNames.append(feature.
                                getElementsByTagName('ogr:s_filepath')[0].
                                childNodes[0].
                                nodeValue)
-                        
+
         return dgFileNames
-        
-    #---------------------------------------------------------------------------
+
+    # -------------------------------------------------------------------------
     # _buildWhereClauseGdb
-    #---------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def _buildWhereClauseGdb(self):
-        
-        # Add level-1 data only, the start of a where clause.    
+
+        # Add level-1 data only, the start of a where clause.
         whereClause = "where (prod_short='1B')"
-        
+
         # Add sensor list.
         first = True
         sensors = self.sensors if self.sensors else FootprintsQuery.RUN_SENSORS
-        
+
         for sensor in sensors:
 
             if first:
@@ -387,7 +387,7 @@ class FootprintsQuery(object):
 
         # Add the catalog ID list.
         first = True
-        
+
         for catID in self.catalogIDs:
 
             if first:
@@ -402,18 +402,18 @@ class FootprintsQuery(object):
 
         if not first:
             whereClause += ')'
-            
+
         # Set panchromatic or multispectral.
         if not self.usePanchromatic:
-            whereClause += ' AND (SPEC_TYPE <> \'Panchromatic\' )'  
-          
+            whereClause += ' AND (SPEC_TYPE <> \'Panchromatic\' )'
+
         if not self.useMultispectral:
             whereClause += ' AND (SPEC_TYPE <> \'Multispectral\')'
-            
+
         # Set bands.
         if self.numBands > 0:
             whereClause += ' AND (BANDS=\'' + str(self.numBands) + '\')'
-            
+
         # Set end date.  "2018/07/02 00:00:00"
         whereClause += ' AND (ACQ_DATE<\'' + \
                        self.endDate.strftime("%Y-%m-%d %H:%M:%S") + \
@@ -421,4 +421,3 @@ class FootprintsQuery(object):
 
         # return unicode(whereClause)
         return whereClause
-                

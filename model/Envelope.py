@@ -22,6 +22,13 @@ class Envelope(ogr.Geometry):
         # Initialize the base class.
         super(Envelope, self).__init__(ogr.wkbMultiPoint)
 
+        # ---
+        # Hang onto EPSG:4326 because it is a special case that must be
+        # accommodated in various places.
+        # ---
+        self._srs4326 = SpatialReference()
+        self._srs4326.ImportFromEPSG(4326)
+
     # -------------------------------------------------------------------------
     # addPoint
     #
@@ -85,36 +92,83 @@ class Envelope(ogr.Geometry):
                    otherEnvelope.GetSpatialReference())
 
     # -------------------------------------------------------------------------
+    # expandByPercentage
+    # -------------------------------------------------------------------------
+    def expandByPercentage(self, percentage=10):
+
+        ulPoint = ogr.Geometry(ogr.wkbPoint)
+        ulPoint.AddPoint(float(self.ulx()), float(self.uly()))
+        ulPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        lrPoint = ogr.Geometry(ogr.wkbPoint)
+        lrPoint.AddPoint(float(self.lrx()), float(self.lry()))
+        lrPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        urPoint = ogr.Geometry(ogr.wkbPoint)
+        urPoint.AddPoint(float(self.lrx()), float(self.uly()))
+        urPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        width = ulPoint.Distance(urPoint)
+        height = ulPoint.Distance(lrPoint)
+
+        pct = percentage / 100.0
+        exWidth = abs(width * pct / 2.0)
+        exHeight = abs(height * pct / 2.0)
+
+        exUlx = self.ulx() - exWidth
+        exUly = self.uly() + exHeight
+        exLrx = self.lrx() + exWidth
+        exLry = self.lry() - exHeight
+
+        return exUlx, exUly, exLrx, exLry
+
+    # -------------------------------------------------------------------------
     # lrx
     # -------------------------------------------------------------------------
     def lrx(self):
 
-        # return self._getOrdinate(1)
-        return self.GetEnvelope()[1]
+        if self.GetSpatialReference().IsSame(self._srs4326):
+
+            return self.GetEnvelope()[3]
+
+        else:
+            return self.GetEnvelope()[1]
 
     # -------------------------------------------------------------------------
     # lry
     # -------------------------------------------------------------------------
     def lry(self):
 
-        # return self._getOrdinate(2)
-        return self.GetEnvelope()[2]
+        if self.GetSpatialReference().IsSame(self._srs4326):
+
+            return self.GetEnvelope()[0]
+
+        else:
+            return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
     # ulx
     # -------------------------------------------------------------------------
     def ulx(self):
 
-        # return self._getOrdinate(0)
-        return self.GetEnvelope()[0]
+        if self.GetSpatialReference().IsSame(self._srs4326):
+
+            return self.GetEnvelope()[2]
+
+        else:
+            return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
     # uly
     # -------------------------------------------------------------------------
     def uly(self):
 
-        # return self._getOrdinate(3)
-        return self.GetEnvelope()[3]
+        if self.GetSpatialReference().IsSame(self._srs4326):
+
+            return self.GetEnvelope()[1]
+
+        else:
+            return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------
     # __setstate__

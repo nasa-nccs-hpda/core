@@ -18,7 +18,7 @@ from core.model.Envelope import Envelope
 # export PYTHONPATH=`pwd`
 #
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_Envelope
+# python -m unittest core.model.tests.test_Envelope
 # -----------------------------------------------------------------------------
 class EnvelopeTestCase(unittest.TestCase):
 
@@ -97,6 +97,38 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertEqual(env.uly(), 30.0)
 
     # -------------------------------------------------------------------------
+    # testExpandByPercentage
+    # -------------------------------------------------------------------------
+    def testExpandByPercentage(self):
+
+        ulx = 374187
+        uly = 4202663
+        lrx = 501598
+        lry = 4100640
+        srs = SpatialReference()
+        srs.ImportFromEPSG(32612)
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        env.expandByPercentage(0.0)
+        self.assertEqual(ulx, env.ulx())
+        self.assertEqual(uly, env.uly())
+        self.assertEqual(lrx, env.lrx())
+        self.assertEqual(lry, env.lry())
+
+        percentage = 10
+        width = 127411.0
+        height = 163224.55529116935
+        exWidth = width * percentage / 100 / 2.0
+        exHeight = height * percentage / 100 / 2.0
+        exUlx = abs(ulx - exWidth)
+        exUly = abs(uly + exHeight)
+        newUlx, newUly, newLrx, newLry = env.expandByPercentage(percentage)
+        self.assertEqual(exUlx, newUlx)
+        self.assertEqual(exUly, newUly)
+
+    # -------------------------------------------------------------------------
     # testExpansion
     # -------------------------------------------------------------------------
     def testExpansion(self):
@@ -152,7 +184,7 @@ class EnvelopeTestCase(unittest.TestCase):
     # testTransformTo
     # -------------------------------------------------------------------------
     def testTransformTo(self):
-        
+
         ulx = 626002.2463251714         # 94.19
         uly = 2145525.859757114         # 19.40
         lrx = 668316.2848759613         # 94.59
@@ -177,4 +209,3 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertAlmostEqual(19.400, env.uly(), places=2)
         self.assertAlmostEqual(94.599, env.lrx(), places=2)
         self.assertAlmostEqual(19.100, env.lry(), places=2)
-        

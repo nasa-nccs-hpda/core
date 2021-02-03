@@ -45,13 +45,6 @@ class GeospatialImageFile(ImageFile):
                                ' is invalid.')
 
         self._dataset.SetSpatialRef(spatialReference)
-        
-        # self.__getBaseCmd() = 'gdalwarp ' + \
-        #                       ' -multi' + \
-        #                       ' -of netCDF' + \
-        #                       ' -s_srs "' + \
-        #                       self._dataset.GetSpatialRef().ExportToProj4() + \
-        #                       '"'
 
     # -------------------------------------------------------------------------
     # clipReproject
@@ -134,7 +127,7 @@ class GeospatialImageFile(ImageFile):
     # _getBaseCmd
     # -------------------------------------------------------------------------
     def _getBaseCmd(self):
-        
+
         return 'gdalwarp ' + \
                ' -multi' + \
                ' -of netCDF' + \

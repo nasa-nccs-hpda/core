@@ -34,12 +34,12 @@ class GeospatialImageFileTestCase(unittest.TestCase):
     def _createTestFile(self, createUTM=False):
 
         testFile = None
-        
+
         if createUTM:
-            
+
             testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                     'gsenm_250m_eucl_dist_streams.tif')
-                                
+
             workingCopy = tempfile.mkstemp(suffix='.nc')[1]
             shutil.copyfile(testFile, workingCopy)
 
@@ -105,7 +105,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         self.assertAlmostEqual(clippedLry, lry)
 
         os.remove(imageFile.fileName())
-        
+
         # ---
         # Test only reprojection.
         # ---
@@ -117,21 +117,21 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # gdaltransform confirms these expected values.
         self.assertTrue(imageFile.srs().IsSame(targetSRS))
-        
+
         self.assertAlmostEqual(imageFile.envelope().ulx(),
-                               -112.5144042, 
+                               -112.5144042,
                                places=7)
-                               
-        self.assertAlmostEqual(imageFile.envelope().uly(), 
-                               38.0308143, 
+
+        self.assertAlmostEqual(imageFile.envelope().uly(),
+                               38.0308143,
                                places=7)
-                               
-        self.assertAlmostEqual(imageFile.envelope().lrx(), 
-                               -110.8938763, 
+
+        self.assertAlmostEqual(imageFile.envelope().lrx(),
+                               -110.8938763,
                                places=7)
-                               
-        self.assertAlmostEqual(imageFile.envelope().lry(), 
-                               36.9934700, 
+
+        self.assertAlmostEqual(imageFile.envelope().lry(),
+                               36.9934700,
                                places=7)
 
         os.remove(imageFile.fileName())
@@ -283,11 +283,11 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         self.assertEqual(imageFile.fileName(), imageFile2.fileName())
 
-        #---
+        # ---
         # The SpatialReference object does not export the same string as the
         # one from which it imports, so we cannot simply compare the round-
         # trip getstate and setstate srs.
-        #---
+        # ---
         # self.assertEqual(imageFile.GetSpatialRef().ExportToProj4(),
         #                  imageFile2.GetSpatialRef().ExportToProj4())
 

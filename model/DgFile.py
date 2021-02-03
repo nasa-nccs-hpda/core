@@ -6,8 +6,8 @@ import xml.etree.ElementTree as ET
 
 from osgeo.osr import SpatialReference
 from osgeo import gdal
-from osgeo import osr
 
+from core.model.Envelope import Envelope
 from core.model.GeospatialImageFile import GeospatialImageFile
 from core.model.SystemCommand import SystemCommand
 
@@ -51,14 +51,14 @@ class DgFile(GeospatialImageFile):
             super(DgFile, self).__init__(fileName, None, logger)
 
         except RuntimeError as e:
-            
+
             # ---
             # It could also be the case that the file is corrupt.  This means
             # GDAL will fail when it tries to open the dataset.
             # ---
             if not self._dataset:
                 raise e
-            
+
         # Some data members require the XML file counterpart to the TIF.
         tree = ET.parse(self.xmlFileName)
         self.imdTag = tree.getroot().find('IMD')
@@ -104,18 +104,18 @@ class DgFile(GeospatialImageFile):
             # if no bug, first BAND tag will work for 8-band, 4-band, 1-band.
             # ---
             try:
-                bandTag = [n for n in self.imdTag.getchildren() if
+                bandTag = [n for n in self.imdTag if
                            n.tag.startswith('BAND_B')][0]
 
             except IndexError:  # Pan only has BAND_P
 
                 try:
-                    bandTag = [n for n in self.imdTag.getchildren() if
+                    bandTag = [n for n in self.imdTag if
                                n.tag.startswith('BAND_P')][0]
 
                 except IndexError:
-                
-                    bandTag = [n for n in self.imdTag.getchildren() if
+
+                    bandTag = [n for n in self.imdTag if
                                n.tag.startswith('BAND_S')][0]
 
             self._ulx = min(float(bandTag.find('LLLON').text),
@@ -137,14 +137,22 @@ class DgFile(GeospatialImageFile):
             self.bandNameList = \
                  [n.tag for n in self.imdTag if n.tag.startswith('BAND_')]
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             self.bandNameList = None
 
         # numBands
         try:
             self.numBands = self._dataset.RasterCount
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             self.numBands = None
 
         self.footprintsGml = None
@@ -174,7 +182,11 @@ class DgFile(GeospatialImageFile):
 
             return float(cc)
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -192,20 +204,13 @@ class DgFile(GeospatialImageFile):
             raise RuntimeError('Could not retrieve effective bandwidth.')
 
     # -------------------------------------------------------------------------
-    # firstLineTime()
+    # envelope
     # -------------------------------------------------------------------------
     def envelope(self):
 
-        envelope = None
-
-        if self._ulx:
-
-            envelope = Envelope()
-            envelope.addPoint(self._ulx, self._uly, 0, self.srs())
-            envelope.addPoint(self._lrx, self._lry, 0, self.srs())
-
-        else:
-            envelop = GeospatialImageFile.envelope(self)
+        envelope = Envelope()
+        envelope.addPoint(self._ulx, self._uly, 0, self.srs())
+        envelope.addPoint(self._lrx, self._lry, 0, self.srs())
 
         return envelope
 
@@ -224,7 +229,11 @@ class DgFile(GeospatialImageFile):
                 t = self.imdTag.find('IMAGE').find('FIRSTLINETIME').text
                 return datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -267,7 +276,11 @@ class DgFile(GeospatialImageFile):
         try:
             return self._dataset.GetMetadataItem('bandName')
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -291,7 +304,11 @@ class DgFile(GeospatialImageFile):
 
             return float(value)
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -319,10 +336,10 @@ class DgFile(GeospatialImageFile):
                                         self.getCatalogId())
 
         except Exception as e:
-            
+
             if self.logger:
                 self.logger.warn(e)
-                
+
             return None
 
     # -------------------------------------------------------------------------
@@ -343,9 +360,9 @@ class DgFile(GeospatialImageFile):
     # isSwir
     # -------------------------------------------------------------------------
     def isSwir(self):
-        
+
         return self.specTypeCode() == 'SWIR'
-        
+
     # -------------------------------------------------------------------------
     # meanSatelliteAzimuth
     # -------------------------------------------------------------------------
@@ -382,7 +399,11 @@ class DgFile(GeospatialImageFile):
         try:
             return self.imdTag.find('PRODUCTLEVEL').text
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -398,7 +419,11 @@ class DgFile(GeospatialImageFile):
 
             return sens
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             pass
 
         return None
@@ -424,13 +449,17 @@ class DgFile(GeospatialImageFile):
                     stc = 'PAN'
 
                 elif self.imdTag.find('BANDID').text == 'MS1' or \
-                     self.imdTag.find('BANDID').text == 'Multi':
+                        self.imdTag.find('BANDID').text == 'Multi':
 
                     stc = 'MS'
 
             return stc
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -453,7 +482,11 @@ class DgFile(GeospatialImageFile):
             ds = None
             return outBin
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None
 
     # -------------------------------------------------------------------------
@@ -489,5 +522,9 @@ class DgFile(GeospatialImageFile):
 
             return yr
 
-        except:
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
             return None

@@ -30,17 +30,20 @@ class ImageFile(BaseFile):
 
         try:
             self._dataset = gdal.Open(self._filePath, gdalconst.GA_ReadOnly)
-                                      
+
             if not self._dataset:
-                
-                raise RuntimeError('GDAL returned an null data set ' + \
-                                   'when opening ' + \
-                                   self._filePath + \
+
+                raise RuntimeError('GDAL returned an null data set ' +
+                                   'when opening ' +
+                                   self._filePath +
                                    '.')
 
-        except:
-            
-            raise RuntimeError('GDAL raised an exception when opening ' + \
+        except Exception as e:
+
+            if self._logger:
+                self._logger.info(e)
+
+            raise RuntimeError('GDAL raised an exception when opening ' +
                                self._filePath + '.')
 
     # -------------------------------------------------------------------------
