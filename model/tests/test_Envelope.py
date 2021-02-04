@@ -93,8 +93,8 @@ class EnvelopeTestCase(unittest.TestCase):
         ogrPt.AssignSpatialReference(srs)
         env.addOgrPoint(ogrPt)
 
-        self.assertEqual(env.ulx(), 20.0)
-        self.assertEqual(env.uly(), 30.0)
+        self.assertEqual(env.ulx(), 30.0)
+        self.assertEqual(env.uly(), 20.0)
 
     # -------------------------------------------------------------------------
     # testExpandByPercentage

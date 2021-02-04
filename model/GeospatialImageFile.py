@@ -118,8 +118,23 @@ class GeospatialImageFile(ImageFile):
         lry = uly + height * yScale
 
         envelope = Envelope()
-        envelope.addPoint(ulx, uly, 0, self._dataset.GetSpatialRef())
-        envelope.addPoint(lrx, lry, 0, self._dataset.GetSpatialRef())
+
+        # ---
+        # If this file is in 4326, we must swap the x-y to conform with GDAL
+        # 3's strict conformity to the 4326 definition.
+        # ---
+        srs4326 = SpatialReference()
+        srs4326.ImportFromEPSG(4326)
+
+        if srs4326.IsSame(self._dataset.GetSpatialRef()):
+
+            envelope.addPoint(uly, ulx, 0, self._dataset.GetSpatialRef())
+            envelope.addPoint(lry, lrx, 0, self._dataset.GetSpatialRef())
+
+        else:
+
+            envelope.addPoint(ulx, uly, 0, self._dataset.GetSpatialRef())
+            envelope.addPoint(lrx, lry, 0, self._dataset.GetSpatialRef())
 
         return envelope
 

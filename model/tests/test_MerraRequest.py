@@ -175,8 +175,8 @@ class MerraRequestTestCase(unittest.TestCase):
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
         env = Envelope()
-        env.addPoint(ulx, uly, 0, srs)
-        env.addPoint(lrx, lry, 0, srs)
+        env.addPoint(uly, ulx, 0, srs)
+        env.addPoint(lry, lrx, 0, srs)
 
         dateRange = pandas.date_range('2010-11-11', '2011-01-12')
         outDir = tempfile.mkdtemp()
@@ -196,7 +196,8 @@ class MerraRequestTestCase(unittest.TestCase):
         self.assertEqual(expected, sorted(files))
 
         clipped = GeospatialImageFile(
-            os.path.join(outDir, 'm2t1nxslv_avg_2010_month11_QV2M.nc'))
+            os.path.join(outDir, 'm2t1nxslv_avg_2010_month11_QV2M.nc'),
+            srs)
 
         self.assertTrue(clipped.envelope().Equal(env))
 
