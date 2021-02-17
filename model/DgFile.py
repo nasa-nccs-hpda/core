@@ -90,8 +90,8 @@ class DgFile(GeospatialImageFile):
             self._dataset.SetSpatialRef(srs)
 
             # ---
-            # Below is a temporary fix until ASP fixes dg_mosaic bug:
-            # dg_mosaic outputs, along with a strip .tif, an aggregate .xml
+            # Below is a temporary fix until ASP fixes dg_mosaic bug.
+            # Dg_mosaic outputs, along with a strip .tif, an aggregate .xml
             # file for all scene inputs. The tif has no projection information,
             # so we have to get that from the output .xml. All bands *should*
             # have same extent in the .xml but a bug with ASP does not ensure
