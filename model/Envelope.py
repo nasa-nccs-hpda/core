@@ -127,48 +127,48 @@ class Envelope(ogr.Geometry):
     # -------------------------------------------------------------------------
     def lrx(self):
 
-        if self.GetSpatialReference().IsSame(self._srs4326):
-
-            return self.GetEnvelope()[3]
-
-        else:
-            return self.GetEnvelope()[1]
+        # if self.GetSpatialReference().IsSame(self._srs4326):
+        #
+        #     return self.GetEnvelope()[3]
+        #
+        # else:
+        return self.GetEnvelope()[1]
 
     # -------------------------------------------------------------------------
     # lry
     # -------------------------------------------------------------------------
     def lry(self):
 
-        if self.GetSpatialReference().IsSame(self._srs4326):
-
-            return self.GetEnvelope()[0]
-
-        else:
-            return self.GetEnvelope()[2]
+        # if self.GetSpatialReference().IsSame(self._srs4326):
+        #
+        #     return self.GetEnvelope()[0]
+        #
+        # else:
+        return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
     # ulx
     # -------------------------------------------------------------------------
     def ulx(self):
 
-        if self.GetSpatialReference().IsSame(self._srs4326):
-
-            return self.GetEnvelope()[2]
-
-        else:
-            return self.GetEnvelope()[0]
+        # if self.GetSpatialReference().IsSame(self._srs4326):
+        #
+        #     return self.GetEnvelope()[2]
+        #
+        # else:
+        return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
     # uly
     # -------------------------------------------------------------------------
     def uly(self):
 
-        if self.GetSpatialReference().IsSame(self._srs4326):
-
-            return self.GetEnvelope()[1]
-
-        else:
-            return self.GetEnvelope()[3]
+        # if self.GetSpatialReference().IsSame(self._srs4326):
+        #
+        #     return self.GetEnvelope()[1]
+        #
+        # else:
+        return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------
     # __setstate__

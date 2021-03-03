@@ -13,10 +13,6 @@ from core.model.Envelope import Envelope
 # -----------------------------------------------------------------------------
 # class EnvelopeTestCase
 #
-# docker run -it -v /Users/rlgill/Desktop/Source/innovation-lab:/home/ilUser/hostFiles -v /Users/rlgill/Desktop/SystemTesting:/home/ilUser/SystemTesting innovation-lab:1.0
-# cd ~/hostFiles
-# export PYTHONPATH=`pwd`
-#
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_Envelope
 # -----------------------------------------------------------------------------
@@ -93,8 +89,8 @@ class EnvelopeTestCase(unittest.TestCase):
         ogrPt.AssignSpatialReference(srs)
         env.addOgrPoint(ogrPt)
 
-        self.assertEqual(env.ulx(), 30.0)
-        self.assertEqual(env.uly(), 20.0)
+        self.assertEqual(env.ulx(), 20.0)
+        self.assertEqual(env.uly(), 30.0)
 
     # -------------------------------------------------------------------------
     # testExpandByPercentage
@@ -209,3 +205,25 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertAlmostEqual(19.400, env.uly(), places=2)
         self.assertAlmostEqual(94.599, env.lrx(), places=2)
         self.assertAlmostEqual(19.100, env.lry(), places=2)
+
+    # -------------------------------------------------------------------------
+    # testGeographicOrdinateOrder
+    # -------------------------------------------------------------------------
+    def testGeographicOrdinateOrder(self):
+
+        ulx = -148
+        uly = 65
+        lrx = -147
+        lry = 64
+
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+        
+        self.assertEqual(ulx, env.ulx())
+        self.assertEqual(uly, env.uly())
+        self.assertEqual(lrx, env.lrx())
+        self.assertEqual(lry, env.lry())
