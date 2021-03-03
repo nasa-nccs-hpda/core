@@ -133,11 +133,6 @@ class Envelope(ogr.Geometry):
         #     return self.GetEnvelope()[3]
         #
         # else:
-
-        if self.GetSpatialReference().IsSame(self._srs4326):
-            self.GetSpatialReference(). \
-                SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
         return self.GetEnvelope()[1]
 
     # -------------------------------------------------------------------------
@@ -150,11 +145,6 @@ class Envelope(ogr.Geometry):
         #     return self.GetEnvelope()[0]
         #
         # else:
-
-        if self.GetSpatialReference().IsSame(self._srs4326):
-            self.GetSpatialReference(). \
-                SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
         return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
@@ -167,11 +157,6 @@ class Envelope(ogr.Geometry):
         #     return self.GetEnvelope()[2]
         #
         # else:
-
-        if self.GetSpatialReference().IsSame(self._srs4326):
-            self.GetSpatialReference(). \
-                SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
         return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
@@ -184,11 +169,6 @@ class Envelope(ogr.Geometry):
         #     return self.GetEnvelope()[1]
         #
         # else:
-
-        if self.GetSpatialReference().IsSame(self._srs4326):
-            self.GetSpatialReference(). \
-                SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
         return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------
