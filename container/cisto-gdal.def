@@ -1,0 +1,42 @@
+#-------------------------------------------------------------------------------
+# General Purpose Container: GDAL 3 on Ubuntu
+#-------------------------------------------------------------------------------
+Bootstrap: docker
+FROM: osgeo/gdal:ubuntu-full-latest
+
+%labels
+    Author gtamkin
+    Version v2.0.0
+
+%help
+===========================================================================
+	- cisto-gdal-ubuntu – contains the Python data science ecosystem:
+		a.	osgeo/gdal:ubuntu-full-latest
+===========================================================================
+
+%test
+
+    echo 'System Information:'
+    uname -a
+
+    echo 'Linux Version:'
+    cat /etc/os-release
+
+    echo 'gdalinfo --formats | grep -i jpeg'
+    gdalinfo --formats | grep -i jpeg
+
+    echo 'gdalinfo --formats | grep -i hdf'
+    gdalinfo --formats | grep -i hdf
+
+    echo 'ogrinfo --formats | grep GDB'
+    ogrinfo --formats | grep GDB
+
+    echo 'Python version:'
+    python -V
+
+    echo 'GDAL version:'
+    python -c 'from osgeo import gdal; print(gdal.__version__)'
+
+    echo 'Java version:'
+    java --version
+
