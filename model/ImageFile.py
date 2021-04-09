@@ -17,7 +17,7 @@ class ImageFile(BaseFile):
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, pathToFile):
+    def __init__(self, pathToFile, readOnly=True):
 
         # Initialize the base class.
         super(ImageFile, self).__init__(pathToFile)
@@ -29,7 +29,8 @@ class ImageFile(BaseFile):
         self._dataset = None
 
         try:
-            self._dataset = gdal.Open(self._filePath, gdalconst.GA_ReadOnly)
+            ro = gdalconst.GA_ReadOnly if readOnly else gdalconst.GF_Write
+            self._dataset = gdal.Open(self._filePath, ro)
 
             if not self._dataset:
 

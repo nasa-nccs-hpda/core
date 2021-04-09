@@ -23,9 +23,9 @@ class Chunker(object):
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, imageFileName):
+    def __init__(self, imageFileName, readOnly=True):
 
-        self._imageFile = ImageFile(imageFileName)
+        self._imageFile = ImageFile(imageFileName, readOnly)
         self._xSize = 1
         self._ySize = 1
         self._curChunkLoc = (0, 0)
