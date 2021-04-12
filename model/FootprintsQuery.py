@@ -330,12 +330,11 @@ class FootprintsQuery(object):
             #        where + \
             #        unicode(' order by ACQ_DATE DESC"')
 
-            cmd += ' -sql "select * from nga_inventory_canon ' + \
+            cmd += ' -sql "select * from nga_footprint_master_v1 ' + \
                    where + \
                    ' order by ACQ_DATE DESC"'
 
-        fpFile = '/css/nga/INDEX/Footprints/current/newest/' + \
-                 'geodatabase/nga_inventory_canon.gdb'
+        fpFile = '/css/nga/INDEX/current/nga_footprint.gdb'
 
         queryResult = tempfile.mkstemp()[1]
         cmd += ' "' + queryResult + '"  "' + fpFile + '" '
