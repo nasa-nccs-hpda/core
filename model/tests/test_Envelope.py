@@ -3,15 +3,21 @@
 
 import unittest
 
+from osgeo import gdal
 from osgeo import ogr
 from osgeo.osr import SpatialReference
 from osgeo import osr
 
 from core.model.Envelope import Envelope
 
+gdal.UseExceptions() 
+
 
 # -----------------------------------------------------------------------------
 # class EnvelopeTestCase
+#
+# https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
+
 #
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_Envelope
@@ -195,8 +201,6 @@ class EnvelopeTestCase(unittest.TestCase):
 
         targetSrs = SpatialReference()
         targetSrs.ImportFromEPSG(4326)
-
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
         targetSrs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
         env.TransformTo(targetSrs)
@@ -215,14 +219,14 @@ class EnvelopeTestCase(unittest.TestCase):
         uly = 65
         lrx = -147
         lry = 64
-
+        
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
 
         env = Envelope()
         env.addPoint(ulx, uly, 0, srs)
         env.addPoint(lrx, lry, 0, srs)
-        
+
         self.assertEqual(ulx, env.ulx())
         self.assertEqual(uly, env.uly())
         self.assertEqual(lrx, env.lrx())

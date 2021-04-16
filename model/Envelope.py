@@ -23,13 +23,6 @@ class Envelope(ogr.Geometry):
         # Initialize the base class.
         super(Envelope, self).__init__(ogr.wkbMultiPoint)
 
-        # ---
-        # Hang onto EPSG:4326 because it is a special case that must be
-        # accommodated in various places.
-        # ---
-        self._srs4326 = SpatialReference()
-        self._srs4326.ImportFromEPSG(4326)
-
     # -------------------------------------------------------------------------
     # addPoint
     #
@@ -43,13 +36,7 @@ class Envelope(ogr.Geometry):
 
         ogrPt = ogr.Geometry(ogr.wkbPoint)
         ogrPt.AssignSpatialReference(srs)
-
-        # ---
-        # The next line causes the GetGeometryType() to become -2147483647,
-        # although GetGeometryName() remains 'POINT'.
-        # ---
         ogrPt.AddPoint(x, y, z)
-
         self.addOgrPoint(ogrPt)
 
     # -------------------------------------------------------------------------
@@ -63,6 +50,9 @@ class Envelope(ogr.Geometry):
 
             raise RuntimeError('Added points must be of type wkbPoint.')
 
+        ogrPoint.GetSpatialReference(). \
+            SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         if not self.GetSpatialReference():
 
             self.AssignSpatialReference(
@@ -74,7 +64,7 @@ class Envelope(ogr.Geometry):
             raise RuntimeError('Added points must be in the SRS: ' +
                                str(self.GetSpatialReference().
                                    ExportToPrettyWkt()))
-
+                                   
         self.AddGeometry(ogrPoint)
 
     # -------------------------------------------------------------------------
@@ -96,6 +86,9 @@ class Envelope(ogr.Geometry):
     # expandByPercentage
     # -------------------------------------------------------------------------
     def expandByPercentage(self, percentage=10):
+
+        self.GetSpatialReference(). \
+            SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
         ulPoint = ogr.Geometry(ogr.wkbPoint)
         ulPoint.AddPoint(float(self.ulx()), float(self.uly()))
@@ -128,23 +121,13 @@ class Envelope(ogr.Geometry):
     # -------------------------------------------------------------------------
     def lrx(self):
 
-        # if self.GetSpatialReference().IsSame(self._srs4326):
-        #
-        #     return self.GetEnvelope()[3]
-        #
-        # else:
         return self.GetEnvelope()[1]
-
+        
     # -------------------------------------------------------------------------
     # lry
     # -------------------------------------------------------------------------
     def lry(self):
 
-        # if self.GetSpatialReference().IsSame(self._srs4326):
-        #
-        #     return self.GetEnvelope()[0]
-        #
-        # else:
         return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
@@ -152,11 +135,6 @@ class Envelope(ogr.Geometry):
     # -------------------------------------------------------------------------
     def ulx(self):
 
-        # if self.GetSpatialReference().IsSame(self._srs4326):
-        #
-        #     return self.GetEnvelope()[2]
-        #
-        # else:
         return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
@@ -164,11 +142,6 @@ class Envelope(ogr.Geometry):
     # -------------------------------------------------------------------------
     def uly(self):
 
-        # if self.GetSpatialReference().IsSame(self._srs4326):
-        #
-        #     return self.GetEnvelope()[1]
-        #
-        # else:
         return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------

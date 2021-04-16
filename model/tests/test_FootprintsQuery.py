@@ -13,11 +13,9 @@ from core.model.FootprintsQuery import FootprintsQuery
 # FootprintsQueryTestCase
 #
 # python -m unittest discover model/tests/
-# python3 -m unittest model.tests.test_FootprintsQuery
-# python3 -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
-#
-# evhr102's GDAL version is 2.2.2
-# dsg101's GDAL version is 2.1.2
+# python -m unittest model.tests.test_FootprintsQuery
+# python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
+# python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testConsistentResults
 # ------------------------------------------------------------------------------
 class FootprintsQueryTestCase(unittest.TestCase):
 
@@ -75,11 +73,11 @@ class FootprintsQueryTestCase(unittest.TestCase):
         lry = 19.1
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-        # Axis order for 4326 is backwards.
         env = Envelope()
-        env.addPoint(uly, ulx, 0, srs)
-        env.addPoint(lry, lrx, 0, srs)
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
 
         fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
         fpq.addAoI(env)

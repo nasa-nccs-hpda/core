@@ -55,6 +55,7 @@ class FootprintsQuery(object):
         # ---
         targetSRS = SpatialReference()
         targetSRS.ImportFromEPSG(4326)
+        targetSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
         if not envelope.GetSpatialReference().IsSame(targetSRS):
             envelope.TransformTo(targetSRS)

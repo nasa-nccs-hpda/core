@@ -197,8 +197,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
         env = Envelope()
-        env.addPoint(uly, ulx, 0, srs)
-        env.addPoint(lry, lrx, 0, srs)
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
         imageFile.clipReproject(env)
 
         # Check the corners.
