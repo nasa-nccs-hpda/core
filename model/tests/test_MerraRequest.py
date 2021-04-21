@@ -7,6 +7,7 @@ import unittest
 
 import pandas
 
+from osgeo import osr
 from osgeo.osr import SpatialReference
 
 from core.model.Envelope import Envelope
