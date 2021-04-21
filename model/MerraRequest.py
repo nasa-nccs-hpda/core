@@ -4,6 +4,7 @@ import os
 import shutil
 import warnings
 
+from osgeo import osr
 from osgeo.osr import SpatialReference
 
 import pandas
@@ -82,6 +83,7 @@ class MerraRequest(object):
 
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         subFiles = []
 
         for f in files:
