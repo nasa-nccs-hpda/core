@@ -29,6 +29,8 @@ class GeospatialImageFile(ImageFile):
         # Initialize the base class.
         super(GeospatialImageFile, self).__init__(pathToFile)
 
+        self.logger = logger
+
         # Initialize the spatial reference.
         if not spatialReference:
 
@@ -42,14 +44,7 @@ class GeospatialImageFile(ImageFile):
                                pathToFile,
                                ' is invalid.')
 
-        self._srs = spatialReference
-
-        self._BASE_GDAL_CMD = 'gdalwarp ' + \
-                              ' -multi' + \
-                              ' -of netCDF' + \
-                              ' -s_srs "' + self.srs().ExportToProj4() + '"'
-
-#        self.logger = logger
+        self._dataset.SetSpatialRef(spatialReference)
 
     # -------------------------------------------------------------------------
     # clipReproject
@@ -68,7 +63,7 @@ class GeospatialImageFile(ImageFile):
             raise RuntimeError('Clip envelope or output SRS must be ' +
                                'specified.')
 
-        cmd = self._BASE_GDAL_CMD
+        cmd = self._getBaseCmd()
 
         # Clip?
         if envelope:
@@ -91,7 +86,7 @@ class GeospatialImageFile(ImageFile):
                     '"')
 
         # Reproject?
-        if outputSRS and not self.srs().IsSame(outputSRS):
+        if outputSRS and not self._dataset.GetSpatialRef().IsSame(outputSRS):
 
             cmd += ' -t_srs "' + outputSRS.ExportToProj4() + '"'
             self._srs = outputSRS
@@ -99,13 +94,12 @@ class GeospatialImageFile(ImageFile):
         # Finish the command.
         outFile = tempfile.mkstemp()[1]
         cmd += ' ' + dataset + ' ' + outFile
-        SystemCommand(cmd, None, True)
-#        SystemCommand(cmd, self.logger, True)
+        SystemCommand(cmd, self.logger, True)
 
         shutil.move(outFile, self._filePath)
 
         # Update the dataset.
-        self._getDataset()
+        self.__init__(self._filePath, outputSRS)
 
     # -------------------------------------------------------------------------
     # envelope
@@ -124,10 +118,37 @@ class GeospatialImageFile(ImageFile):
         lry = uly + height * yScale
 
         envelope = Envelope()
-        envelope.addPoint(ulx, uly, 0, self.srs())
-        envelope.addPoint(lrx, lry, 0, self.srs())
+
+        # ---
+        # If this file is in 4326, we must swap the x-y to conform with GDAL
+        # 3's strict conformity to the 4326 definition.
+        # ---
+        srs4326 = SpatialReference()
+        srs4326.ImportFromEPSG(4326)
+
+        if srs4326.IsSame(self._dataset.GetSpatialRef()):
+
+            envelope.addPoint(uly, ulx, 0, self._dataset.GetSpatialRef())
+            envelope.addPoint(lry, lrx, 0, self._dataset.GetSpatialRef())
+
+        else:
+
+            envelope.addPoint(ulx, uly, 0, self._dataset.GetSpatialRef())
+            envelope.addPoint(lrx, lry, 0, self._dataset.GetSpatialRef())
 
         return envelope
+
+    # -------------------------------------------------------------------------
+    # _getBaseCmd
+    # -------------------------------------------------------------------------
+    def _getBaseCmd(self):
+
+        return 'gdalwarp ' + \
+               ' -multi' + \
+               ' -of netCDF' + \
+               ' -s_srs "' + \
+               self._dataset.GetSpatialRef().ExportToProj4() + \
+               '"'
 
     # -------------------------------------------------------------------------
     # getSquareScale
@@ -153,7 +174,7 @@ class GeospatialImageFile(ImageFile):
     # -------------------------------------------------------------------------
     def resample(self, xScale, yScale):
 
-        cmd = self._BASE_GDAL_CMD + ' -tr ' + str(xScale) + ' ' + \
+        cmd = self._getBaseCmd() + ' -tr ' + str(xScale) + ' ' + \
               str(yScale)
 
         # Finish the command.
@@ -178,7 +199,7 @@ class GeospatialImageFile(ImageFile):
     # -------------------------------------------------------------------------
     def srs(self):
 
-        return self._srs
+        return self._dataset.GetSpatialRef()
 
     # -------------------------------------------------------------------------
     # __getstate__
@@ -186,7 +207,7 @@ class GeospatialImageFile(ImageFile):
     def __getstate__(self):
 
         state = {GeospatialImageFile.FILE_KEY: self.fileName(),
-                 GeospatialImageFile.SRS_KEY: self._srs.ExportToProj4()}
+                 GeospatialImageFile.SRS_KEY: self.srs().ExportToProj4()}
 
         return state
 

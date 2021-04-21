@@ -7,6 +7,7 @@ import unittest
 
 import pandas
 
+from osgeo import osr
 from osgeo.osr import SpatialReference
 
 from core.model.Envelope import Envelope
@@ -174,6 +175,7 @@ class MerraRequestTestCase(unittest.TestCase):
         lry = 39
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         env = Envelope()
         env.addPoint(ulx, uly, 0, srs)
         env.addPoint(lrx, lry, 0, srs)
@@ -196,7 +198,8 @@ class MerraRequestTestCase(unittest.TestCase):
         self.assertEqual(expected, sorted(files))
 
         clipped = GeospatialImageFile(
-            os.path.join(outDir, 'm2t1nxslv_avg_2010_month11_QV2M.nc'))
+            os.path.join(outDir, 'm2t1nxslv_avg_2010_month11_QV2M.nc'),
+            srs)
 
         self.assertTrue(clipped.envelope().Equal(env))
 

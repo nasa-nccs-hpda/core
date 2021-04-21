@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from osgeo import ogr
+from osgeo import osr
+from osgeo.osr import CoordinateTransformation
 from osgeo.osr import SpatialReference
 
 
@@ -34,13 +36,7 @@ class Envelope(ogr.Geometry):
 
         ogrPt = ogr.Geometry(ogr.wkbPoint)
         ogrPt.AssignSpatialReference(srs)
-
-        # ---
-        # The next line causes the GetGeometryType() to become -2147483647,
-        # although GetGeometryName() remains 'POINT'.
-        # ---
         ogrPt.AddPoint(x, y, z)
-
         self.addOgrPoint(ogrPt)
 
     # -------------------------------------------------------------------------
@@ -54,6 +50,9 @@ class Envelope(ogr.Geometry):
 
             raise RuntimeError('Added points must be of type wkbPoint.')
 
+        ogrPoint.GetSpatialReference(). \
+            SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
         if not self.GetSpatialReference():
 
             self.AssignSpatialReference(
@@ -65,7 +64,7 @@ class Envelope(ogr.Geometry):
             raise RuntimeError('Added points must be in the SRS: ' +
                                str(self.GetSpatialReference().
                                    ExportToPrettyWkt()))
-
+                                   
         self.AddGeometry(ogrPoint)
 
     # -------------------------------------------------------------------------
@@ -84,42 +83,66 @@ class Envelope(ogr.Geometry):
                    otherEnvelope.GetSpatialReference())
 
     # -------------------------------------------------------------------------
-    # _getOrdinate
+    # expandByPercentage
     # -------------------------------------------------------------------------
-    def _getOrdinate(self, index):
+    def expandByPercentage(self, percentage=10):
 
-        if index < 0 or index > 3:
-            raise RuntimeError('Index must be between 0 and 3.')
+        self.GetSpatialReference(). \
+            SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-        return self.GetEnvelope()[index]
+        ulPoint = ogr.Geometry(ogr.wkbPoint)
+        ulPoint.AddPoint(float(self.ulx()), float(self.uly()))
+        ulPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        lrPoint = ogr.Geometry(ogr.wkbPoint)
+        lrPoint.AddPoint(float(self.lrx()), float(self.lry()))
+        lrPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        urPoint = ogr.Geometry(ogr.wkbPoint)
+        urPoint.AddPoint(float(self.lrx()), float(self.uly()))
+        urPoint.AssignSpatialReference(self.GetSpatialReference())
+
+        width = ulPoint.Distance(urPoint)
+        height = ulPoint.Distance(lrPoint)
+
+        pct = percentage / 100.0
+        exWidth = abs(width * pct / 2.0)
+        exHeight = abs(height * pct / 2.0)
+
+        exUlx = self.ulx() - exWidth
+        exUly = self.uly() + exHeight
+        exLrx = self.lrx() + exWidth
+        exLry = self.lry() - exHeight
+
+        return exUlx, exUly, exLrx, exLry
 
     # -------------------------------------------------------------------------
     # lrx
     # -------------------------------------------------------------------------
     def lrx(self):
 
-        return self._getOrdinate(1)
-
+        return self.GetEnvelope()[1]
+        
     # -------------------------------------------------------------------------
     # lry
     # -------------------------------------------------------------------------
     def lry(self):
 
-        return self._getOrdinate(2)
+        return self.GetEnvelope()[2]
 
     # -------------------------------------------------------------------------
     # ulx
     # -------------------------------------------------------------------------
     def ulx(self):
 
-        return self._getOrdinate(0)
+        return self.GetEnvelope()[0]
 
     # -------------------------------------------------------------------------
     # uly
     # -------------------------------------------------------------------------
     def uly(self):
 
-        return self._getOrdinate(3)
+        return self.GetEnvelope()[3]
 
     # -------------------------------------------------------------------------
     # __setstate__
