@@ -17,7 +17,6 @@ gdal.UseExceptions()
 # class EnvelopeTestCase
 #
 # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-
 #
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_Envelope

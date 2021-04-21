@@ -174,6 +174,7 @@ class MerraRequestTestCase(unittest.TestCase):
         lry = 39
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         env = Envelope()
         env.addPoint(uly, ulx, 0, srs)
         env.addPoint(lry, lrx, 0, srs)
