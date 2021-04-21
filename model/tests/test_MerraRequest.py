@@ -177,8 +177,8 @@ class MerraRequestTestCase(unittest.TestCase):
         srs.ImportFromEPSG(4326)
         srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         env = Envelope()
-        env.addPoint(uly, ulx, 0, srs)
-        env.addPoint(lry, lrx, 0, srs)
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
 
         dateRange = pandas.date_range('2010-11-11', '2011-01-12')
         outDir = tempfile.mkdtemp()
