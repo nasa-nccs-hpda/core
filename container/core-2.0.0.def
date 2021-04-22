@@ -1,6 +1,6 @@
 ## Generate core container with ilab-specific dependencies that builds on the Python ecosystem container
 Bootstrap: localimage
-FROM: ./cisto-data-science.sif
+FROM: ./cisto-data-science-2.0.0.sif
 
 %labels
     Author gtamkin

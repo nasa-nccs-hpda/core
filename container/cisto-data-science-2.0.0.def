@@ -2,7 +2,7 @@
 # General Purpose Container: Python 3 with data science ecosystem on Ubuntu
 #-------------------------------------------------------------------------------
 Bootstrap: localimage
-FROM: cisto-gdal.sif
+FROM: cisto-gdal-2.0.0.sif
 
 %labels
     Author gtamkin
