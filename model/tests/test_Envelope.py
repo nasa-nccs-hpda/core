@@ -3,21 +3,23 @@
 
 import unittest
 
+from osgeo import gdal
 from osgeo import ogr
 from osgeo.osr import SpatialReference
+from osgeo import osr
 
 from core.model.Envelope import Envelope
+
+gdal.UseExceptions() 
 
 
 # -----------------------------------------------------------------------------
 # class EnvelopeTestCase
 #
-# docker run -it -v /Users/rlgill/Desktop/Source/innovation-lab:/home/ilUser/hostFiles -v /Users/rlgill/Desktop/SystemTesting:/home/ilUser/SystemTesting innovation-lab:1.0
-# cd ~/hostFiles
-# export PYTHONPATH=`pwd`
+# https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
 #
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_Envelope
+# python -m unittest core.model.tests.test_Envelope
 # -----------------------------------------------------------------------------
 class EnvelopeTestCase(unittest.TestCase):
 
@@ -96,6 +98,38 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertEqual(env.uly(), 30.0)
 
     # -------------------------------------------------------------------------
+    # testExpandByPercentage
+    # -------------------------------------------------------------------------
+    def testExpandByPercentage(self):
+
+        ulx = 374187
+        uly = 4202663
+        lrx = 501598
+        lry = 4100640
+        srs = SpatialReference()
+        srs.ImportFromEPSG(32612)
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        env.expandByPercentage(0.0)
+        self.assertEqual(ulx, env.ulx())
+        self.assertEqual(uly, env.uly())
+        self.assertEqual(lrx, env.lrx())
+        self.assertEqual(lry, env.lry())
+
+        percentage = 10
+        width = 127411.0
+        height = 163224.55529116935
+        exWidth = width * percentage / 100 / 2.0
+        exHeight = height * percentage / 100 / 2.0
+        exUlx = abs(ulx - exWidth)
+        exUly = abs(uly + exHeight)
+        newUlx, newUly, newLrx, newLry = env.expandByPercentage(percentage)
+        self.assertEqual(exUlx, newUlx)
+        self.assertEqual(exUly, newUly)
+
+    # -------------------------------------------------------------------------
     # testExpansion
     # -------------------------------------------------------------------------
     def testExpansion(self):
@@ -146,3 +180,53 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertEqual(env.uly(), env2.uly())
         self.assertEqual(env.lrx(), env2.lrx())
         self.assertEqual(env.lry(), env2.lry())
+
+    # -------------------------------------------------------------------------
+    # testTransformTo
+    # -------------------------------------------------------------------------
+    def testTransformTo(self):
+
+        ulx = 626002.2463251714         # 94.19
+        uly = 2145525.859757114         # 19.40
+        lrx = 668316.2848759613         # 94.59
+        lry = 2112661.4394026464        # 19.10
+
+        srs = SpatialReference()
+        srs.ImportFromEPSG(32646)
+
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        targetSrs = SpatialReference()
+        targetSrs.ImportFromEPSG(4326)
+        targetSrs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+        env.TransformTo(targetSrs)
+
+        self.assertAlmostEqual(94.199, env.ulx(), places=2)
+        self.assertAlmostEqual(19.400, env.uly(), places=2)
+        self.assertAlmostEqual(94.599, env.lrx(), places=2)
+        self.assertAlmostEqual(19.100, env.lry(), places=2)
+
+    # -------------------------------------------------------------------------
+    # testGeographicOrdinateOrder
+    # -------------------------------------------------------------------------
+    def testGeographicOrdinateOrder(self):
+
+        ulx = -148
+        uly = 65
+        lrx = -147
+        lry = 64
+        
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        self.assertEqual(ulx, env.ulx())
+        self.assertEqual(uly, env.uly())
+        self.assertEqual(lrx, env.lrx())
+        self.assertEqual(lry, env.lry())

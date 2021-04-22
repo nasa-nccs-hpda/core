@@ -13,7 +13,7 @@ from core.model.Chunker import Chunker
 # class ChunkerTestCase
 #
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_Chunker
+# python -m unittest core.model.tests.test_Chunker
 # -----------------------------------------------------------------------------
 class ChunkerTestCase(unittest.TestCase):
 
