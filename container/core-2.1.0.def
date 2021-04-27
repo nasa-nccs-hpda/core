@@ -1,0 +1,85 @@
+## Generate core container with ilab-specific dependencies that builds on the Python ecosystem container
+Bootstrap: localimage
+FROM: ./cisto-data-science-2.0.0.sif
+
+%labels
+    Author gtamkin
+    Version v2.0.0
+
+%help
+===========================================================================
+	- core-ubuntu (extends -> cisto-data-science-ubuntu) – contains GIS & ilab dependencies:
+		a.	GDAL (inherited from cisto-gdal-ubuntu via cisto-data-science-ubuntu)
+		b.	Celery
+		c.  Redis (Celery server)
+		d.  Singularity
+===========================================================================
+
+%environment
+    # set PYTHONPATH for access to ILProcessController
+    export PYTHONPATH="$PYTHONPATH:/usr/local/core"
+
+%post
+
+    apt-get install -y git
+
+    # install Celery
+    python -m pip install --upgrade celery[redis]==4.3.1
+
+    # install Redis & Flower (Celery server dependencies)
+    python -m pip install --upgrade redis==3.4.1
+    python -m pip install --upgrade redis-server==5.0.7
+    python -m pip install --upgrade flower==0.9.4
+    cd /usr/local/bin
+    ln -sf /usr/local/lib/python3.8/dist-packages/redis_server/bin/redis-server .
+
+    # retrieve IL Celery automation source from git repository and open permissions
+    mkdir -p /usr/local/core
+    git clone --single-branch --branch master https://github.com/nasa-nccs-hpda/core.git /usr/local/core
+    chmod a+rwx -R /usr/local/core
+
+    # Singularity
+    apt-get update
+    apt-get install -y sudo bash
+
+    apt-get install -y build-essential checkinstall
+    apt-get install -y libreadline-gplv2-dev libncursesw5-dev libssl-dev \
+            libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev liblzma-dev
+
+	# Install Singularity:
+    #  https://sylabs.io/guides/3.0/user-guide/installation.html#download-and-install-singularity-from-a-release
+
+    # Singularity dependencies:
+    sudo apt-get update -y && \
+    sudo apt-get groupinstall -y 'Development Tools' && \
+    sudo apt-get install -y \
+    openssl-devel \
+    libuuid-devel \
+    libseccomp-devel \
+    wget \
+    squashfs-tools
+
+    # Install GO compiler (required for Singularity):
+    export VERSION=1.15 OS=linux ARCH=amd64 && \
+    wget https://dl.google.com/go/go$VERSION.$OS-$ARCH.tar.gz && \
+    sudo tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz && \
+    rm go$VERSION.$OS-$ARCH.tar.gz
+
+    export GOPATH=${HOME}/go
+    export PATH=/usr/local/go/bin:${PATH}:${GOPATH}/bin
+
+    /usr/local/go/bin/go get -u github.com/golang/dep/cmd/dep
+
+    # Install Singularity without SUID to support unprivileged namespaces (required for sandbox<->sandbox calls)
+    export VERSION=3.7.0 && # adjust this as necessary \
+    mkdir -p $GOPATH/src/github.com/sylabs && \
+    cd $GOPATH/src/github.com/sylabs && \
+    wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-${VERSION}.tar.gz && \
+    tar -xzf singularity-${VERSION}.tar.gz && \
+
+    cd ./singularity && \
+    ./mconfig --without-suid --prefix=/opt/singularity && \
+    make -C ./builddir && \
+    sudo make -C ./builddir install
+
+    ln -sf /opt/singularity/bin/singularity /usr/local/bin/singularity
