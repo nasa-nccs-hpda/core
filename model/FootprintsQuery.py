@@ -331,7 +331,7 @@ class FootprintsQuery(object):
             #        where + \
             #        unicode(' order by ACQ_DATE DESC"')
 
-            cmd += ' -sql "select * from nga_footprint_master_v1 ' + \
+            cmd += ' -sql "select * from nga_footprint_master_v2 ' + \
                    where + \
                    ' order by ACQ_DATE DESC"'
 
