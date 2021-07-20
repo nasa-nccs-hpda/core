@@ -1,10 +1,8 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import logging
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
@@ -15,7 +13,6 @@ from osgeo import osr
 
 from core.model.Envelope import Envelope
 from core.model.GeospatialImageFile import GeospatialImageFile
-from core.model.ImageFile import ImageFile
 
 
 # -----------------------------------------------------------------------------
@@ -433,13 +430,12 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         expectedSRS.ImportFromEPSG(4326)
         expectedSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         self.assertTrue(imageFile.srs().IsSame(expectedSRS))
-        
+
         # Test passing an invalid SRS.
         srs = SpatialReference()
-        
+
         with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
             imageFile = GeospatialImageFile(testFile2, srs)
 
         os.remove(workingCopy1)
         os.remove(workingCopy2)
-        

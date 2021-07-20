@@ -1,10 +1,7 @@
 
 import unittest
 
-from osgeo import gdal
-
 from core.model.DgFile import DgFile
-from core.model.ImageFile import ImageFile
 
 
 # -----------------------------------------------------------------------------
@@ -81,10 +78,10 @@ class DgFileTestCase(unittest.TestCase):
     # testWV3
     # -------------------------------------------------------------------------
     def testWV3(self):
-        
+
         dgf = DgFile('/css/nga/WV03/1B/2015/219/' +
                      'WV03_104001000F2D9E00_X1BS_500495393030_01/' +
                      'WV03_20150807213524_104001000F2D9E00_15AUG07213524' +
                      '-M1BS-500495393030_01_P001.ntf')
-                     
+
         dgf.envelope()

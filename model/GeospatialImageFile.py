@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import math
-import os
 import shutil
 import tempfile
 
@@ -33,12 +32,12 @@ class GeospatialImageFile(ImageFile):
 
         # The passed SRS overrides any internal SRS.
         if spatialReference and spatialReference.Validate() == 0:
-            
+
             self._dataset.SetSpatialRef(spatialReference)
 
         # Does the image file have a valid SRS?
         if self._dataset.GetSpatialRef() and \
-            self._dataset.GetSpatialRef().Validate() == 0:
+           self._dataset.GetSpatialRef().Validate() == 0:
 
             return
 
@@ -62,7 +61,7 @@ class GeospatialImageFile(ImageFile):
 
         # After all that, is there a valid SRS in the image?
         if not self._dataset.GetSpatialRef() or \
-            self._dataset.GetSpatialRef().Validate() != 0:
+           self._dataset.GetSpatialRef().Validate() != 0:
 
             raise RuntimeError('Spatial reference for ' +
                                pathToFile,
@@ -123,7 +122,7 @@ class GeospatialImageFile(ImageFile):
         # ---
         # Update the dataset.  It would be nice to use the SRS inside the
         # reprojected file; however, if it is EPSG:4326, the axis order could
-        # be incorrect.  Passing the requested SRS keeps the axis order 
+        # be incorrect.  Passing the requested SRS keeps the axis order
         # consistent.
         # ---
         self.__init__(self._filePath, outputSRS)
