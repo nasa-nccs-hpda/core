@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from osgeo.osr import SpatialReference
 from osgeo import gdal
+from osgeo import osr
 
 from core.model.Envelope import Envelope
 from core.model.GeospatialImageFile import GeospatialImageFile
@@ -81,13 +82,7 @@ class DgFile(GeospatialImageFile):
         self._lry = None
 
         # If srs from GdalFile is empty, set srs, and get coords from the .xml.
-        if not self.srs():
-
-            # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-            srs = SpatialReference()
-            srs.ImportFromEPSG(4326)
-            # srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-            self._dataset.SetSpatialRef(srs)
+        if not self._dataset.GetSpatialRef():
 
             # ---
             # Below is a temporary fix until ASP fixes dg_mosaic bug.
@@ -461,6 +456,20 @@ class DgFile(GeospatialImageFile):
                 self._logger.info(e)
 
             return None
+
+    # -------------------------------------------------------------------------
+    # srs
+    # -------------------------------------------------------------------------
+    def srs(self):
+
+        srs = self._dataset.GetSpatialRef()
+        
+        if not srs:
+            srs = SpatialReference()
+            srs.ImportFromEPSG(4326)
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            
+        return srs
 
     # -------------------------------------------------------------------------
     # toBandInterleavedBinary()

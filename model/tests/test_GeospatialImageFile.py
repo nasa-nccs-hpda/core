@@ -25,6 +25,7 @@ from core.model.ImageFile import ImageFile
 #
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_GeospatialImageFile
+# python -m unittest core.model.tests.test_GeospatialImageFile.GeospatialImageFileTestCase.testInit
 # -----------------------------------------------------------------------------
 class GeospatialImageFileTestCase(unittest.TestCase):
 
@@ -40,7 +41,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
             testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                     'gsenm_250m_eucl_dist_streams.tif')
 
-            workingCopy = tempfile.mkstemp(suffix='.nc')[1]
+            workingCopy = tempfile.mkstemp(suffix='.tif')[1]
             shutil.copyfile(testFile, workingCopy)
 
             srs = SpatialReference()
@@ -298,22 +299,6 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         os.remove(workingCopy)
 
     # -------------------------------------------------------------------------
-    # testInvalidSpatialReference
-    # -------------------------------------------------------------------------
-    def testInvalidSpatialReference(self):
-
-        testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                'TSURF.nc')
-
-        workingCopy = tempfile.mkstemp(suffix='.nc')[1]
-        shutil.copyfile(testFile, workingCopy)
-
-        with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
-            GeospatialImageFile(workingCopy, SpatialReference())
-
-        os.remove(workingCopy)
-
-    # -------------------------------------------------------------------------
     # testNoOperation
     # -------------------------------------------------------------------------
     def testNoOperation(self):
@@ -414,3 +399,47 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # Delete the test file.
         os.remove(imageFile.fileName())
+
+    # -------------------------------------------------------------------------
+    # testInit
+    # -------------------------------------------------------------------------
+    def testInit(self):
+
+        testFile1 = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'gsenm_250m_eucl_dist_streams.tif')
+
+        workingCopy1 = tempfile.mkstemp(suffix='.tif')[1]
+        shutil.copyfile(testFile1, workingCopy1)
+
+        # Test valid SRS within the file.
+        GeospatialImageFile(workingCopy1)
+
+        # Test invalid SRS within the file.
+        testFile2 = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'TSURF.nc')
+
+        workingCopy2 = tempfile.mkstemp(suffix='.nc')[1]
+        shutil.copyfile(testFile2, workingCopy2)
+
+        with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
+            GeospatialImageFile(workingCopy2)
+
+        # Test passing an SRS.
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+        imageFile = GeospatialImageFile(testFile2, srs)
+
+        expectedSRS = SpatialReference()
+        expectedSRS.ImportFromEPSG(4326)
+        expectedSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        self.assertTrue(imageFile.srs().IsSame(expectedSRS))
+        
+        # Test passing an invalid SRS.
+        srs = SpatialReference()
+        
+        with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
+            imageFile = GeospatialImageFile(testFile2, srs)
+
+        os.remove(workingCopy1)
+        os.remove(workingCopy2)
+        
