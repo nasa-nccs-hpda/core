@@ -82,50 +82,50 @@ class DgFile(GeospatialImageFile):
         self._lry = None
 
         # If srs from GdalFile is empty, set srs, and get coords from the .xml.
-        if not self._dataset.GetSpatialRef():
+        # if not self._dataset.GetSpatialRef():
 
-            # ---
-            # Below is a temporary fix until ASP fixes dg_mosaic bug.
-            # Dg_mosaic outputs, along with a strip .tif, an aggregate .xml
-            # file for all scene inputs. The tif has no projection information,
-            # so we have to get that from the output .xml. All bands *should*
-            # have same extent in the .xml but a bug with ASP does not ensure
-            # this is always true.
-            #
-            # For 4-band mosaics, output extent is consitent among all bands.
-            # For 8-band mosaics, the first band (BAND_C) is not updated in the
-            # output .xml, so we have to use second band (BAND_B).
-            #
-            # if no bug, first BAND tag will work for 8-band, 4-band, 1-band.
-            # ---
+        # ---
+        # Below is a temporary fix until ASP fixes dg_mosaic bug.
+        # Dg_mosaic outputs, along with a strip .tif, an aggregate .xml
+        # file for all scene inputs. The tif has no projection information,
+        # so we have to get that from the output .xml. All bands *should*
+        # have same extent in the .xml but a bug with ASP does not ensure
+        # this is always true.
+        #
+        # For 4-band mosaics, output extent is consitent among all bands.
+        # For 8-band mosaics, the first band (BAND_C) is not updated in the
+        # output .xml, so we have to use second band (BAND_B).
+        #
+        # if no bug, first BAND tag will work for 8-band, 4-band, 1-band.
+        # ---
+        try:
+            bandTag = [n for n in self.imdTag if
+                       n.tag.startswith('BAND_B')][0]
+
+        except IndexError:  # Pan only has BAND_P
+
             try:
                 bandTag = [n for n in self.imdTag if
-                           n.tag.startswith('BAND_B')][0]
+                           n.tag.startswith('BAND_P')][0]
 
-            except IndexError:  # Pan only has BAND_P
+            except IndexError:
 
-                try:
-                    bandTag = [n for n in self.imdTag if
-                               n.tag.startswith('BAND_P')][0]
+                bandTag = [n for n in self.imdTag if
+                           n.tag.startswith('BAND_S')][0]
 
-                except IndexError:
+        self._ulx = min(float(bandTag.find('LLLON').text),
+                        float(bandTag.find('ULLON').text))
 
-                    bandTag = [n for n in self.imdTag if
-                               n.tag.startswith('BAND_S')][0]
+        self._uly = max(float(bandTag.find('ULLAT').text),
+                        float(bandTag.find('URLAT').text))
 
-            self._ulx = min(float(bandTag.find('LLLON').text),
-                            float(bandTag.find('ULLON').text))
+        self._lrx = max(float(bandTag.find('LRLON').text),
+                        float(bandTag.find('URLON').text))
 
-            self._uly = max(float(bandTag.find('ULLAT').text),
-                            float(bandTag.find('URLAT').text))
+        self._lry = min(float(bandTag.find('LRLAT').text),
+                        float(bandTag.find('LLLAT').text))
 
-            self._lrx = max(float(bandTag.find('LRLON').text),
-                            float(bandTag.find('URLON').text))
-
-            self._lry = min(float(bandTag.find('LRLAT').text),
-                            float(bandTag.find('LLLAT').text))
-
-            self.validateCoordinates()  # Lastly, validate coordinates
+        self.validateCoordinates()  # Lastly, validate coordinates
 
         # bandNameList
         try:
