@@ -6,7 +6,6 @@ import os
 import tempfile
 from xml.dom import minidom
 
-from osgeo.osr import CoordinateTransformation
 from osgeo.osr import SpatialReference
 from osgeo import osr
 
@@ -361,7 +360,7 @@ class FootprintsQuery(object):
 
         # Add level-1 data only, the start of a where clause.
         whereClause = "where (prod_short='1B')"
-        
+
         # Include only valid records.
         whereClause += " AND (status like 'validated%' or " + \
                        "status = 'previewjpg_path_fail')"
