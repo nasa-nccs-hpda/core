@@ -361,6 +361,10 @@ class FootprintsQuery(object):
 
         # Add level-1 data only, the start of a where clause.
         whereClause = "where (prod_short='1B')"
+        
+        # Include only valid records.
+        whereClause += " AND (status like 'validated%' or " + \
+                       "status = 'previewjpg_path_fail')"
 
         # Add sensor list.
         first = True
