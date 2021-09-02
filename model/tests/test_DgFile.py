@@ -1,10 +1,7 @@
 
 import unittest
 
-from osgeo import gdal
-
 from core.model.DgFile import DgFile
-from core.model.ImageFile import ImageFile
 
 
 # -----------------------------------------------------------------------------
@@ -12,6 +9,7 @@ from core.model.ImageFile import ImageFile
 #
 # python -m unittest discover model/tests/
 # python -m unittest model.tests.test_DgFile
+# python -m unittest model.tests.test_DgFile.DgFileTestCase.testSrsError
 # -----------------------------------------------------------------------------
 class DgFileTestCase(unittest.TestCase):
 
@@ -76,3 +74,27 @@ class DgFileTestCase(unittest.TestCase):
                'WV01_10200100740C0F00_P1BS_504536069020_01/' +
                'WV01_20180907192956_10200100740C0F00_18SEP07192956' +
                '-P1BS-504536069020_01_P001.ntf')
+
+    # -------------------------------------------------------------------------
+    # testWV3
+    # -------------------------------------------------------------------------
+    def testWV3(self):
+
+        dgf = DgFile('/css/nga/WV03/1B/2015/219/' +
+                     'WV03_104001000F2D9E00_X1BS_500495393030_01/' +
+                     'WV03_20150807213524_104001000F2D9E00_15AUG07213524' +
+                     '-M1BS-500495393030_01_P001.ntf')
+
+        dgf.envelope()
+
+    # -------------------------------------------------------------------------
+    # testSrsError
+    # -------------------------------------------------------------------------
+    def testSrsError(self):
+
+        dgf = DgFile('/css/nga/WV02/1B/2010/215/' + 
+                     'WV02_103001000621E500_X1BS_052807177090_01/' +
+                     'WV02_20100803220600_103001000621E500_10AUG03220600' +
+                     '-M1BS-052807177090_01_P002.ntf')
+                     
+        self.assertIsNotNone(dgf._ulx)

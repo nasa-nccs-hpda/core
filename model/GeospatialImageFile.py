@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import math
-import os
 import shutil
 import tempfile
 
@@ -31,20 +30,42 @@ class GeospatialImageFile(ImageFile):
 
         self.logger = logger
 
-        # Initialize the spatial reference.
-        if not spatialReference:
+        # The passed SRS overrides any internal SRS.
+        if spatialReference and spatialReference.Validate() == 0:
 
-            spatialReferenceWkt = self._getDataset().GetProjection()
-            spatialReference = SpatialReference()
-            spatialReference.ImportFromWkt(spatialReferenceWkt)
+            self._dataset.SetSpatialRef(spatialReference)
 
-        if spatialReference.Validate() != 0:
+        # Does the image file have a valid SRS?
+        if self._dataset.GetSpatialRef() and \
+           self._dataset.GetSpatialRef().Validate() == 0:
+
+            return
+
+        # Can the image file's projection be used as an SRS?
+        wkt = self._getDataset().GetProjection()
+
+        if wkt:
+
+            projSRS = SpatialReference()
+            projSRS.ImportFromWkt(wkt)
+
+            if projSRS.Validate() == 0:
+                self._dataset.SetSpatialRef(projSRS)
+
+        # # If there is still no SRS in the image, try to use the one passed.
+        # if not self._dataset.GetSpatialRef() or \
+        #     self._dataset.GetSpatialRef().Validate() != 0:
+        #
+        #     if spatialReference and spatialReference.Validate() == 0:
+        #         self._dataset.SetSpatialRef(spatialReference)
+
+        # After all that, is there a valid SRS in the image?
+        if not self._dataset.GetSpatialRef() or \
+           self._dataset.GetSpatialRef().Validate() != 0:
 
             raise RuntimeError('Spatial reference for ' +
                                pathToFile,
                                ' is invalid.')
-
-        self._dataset.SetSpatialRef(spatialReference)
 
     # -------------------------------------------------------------------------
     # clipReproject
@@ -98,7 +119,12 @@ class GeospatialImageFile(ImageFile):
 
         shutil.move(outFile, self._filePath)
 
-        # Update the dataset.
+        # ---
+        # Update the dataset.  It would be nice to use the SRS inside the
+        # reprojected file; however, if it is EPSG:4326, the axis order could
+        # be incorrect.  Passing the requested SRS keeps the axis order
+        # consistent.
+        # ---
         self.__init__(self._filePath, outputSRS)
 
     # -------------------------------------------------------------------------
