@@ -30,8 +30,23 @@ FROM: ./cisto-data-science.sif
     python -m pip install --upgrade redis==3.4.1
     python -m pip install --upgrade redis-server==5.0.7
     python -m pip install --upgrade flower==0.9.4
-    cd /usr/local/bin
-    ln -sf /usr/local/lib/python3.7/site-packages/redis_server/bin/redis-server .
+	
+	# --- 
+	# Link Redis to /usr/local/bin.  The redis-server command is in Python's
+	# distribution packages, so we must discover which version of Python is being
+	# used.
+	# --- 
+	pyVer=`python --version | awk -F' ' '{print $2}' | awk -F'.' '{print $1"."$2}'`
+	
+	target=/usr/local/lib/python$pyVer/dist-packages/redis_server/bin/redis-server
+	
+	if test -f $target; then
+		
+		ln -sf $target .
+	
+	else	
+		echo "$target does not exist"
+	fi	
 
     # retrieve IL Celery automation source from git repository and open permissions
     mkdir -p /usr/local/core
