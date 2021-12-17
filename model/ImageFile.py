@@ -41,9 +41,6 @@ class ImageFile(BaseFile):
 
         except Exception as e:
 
-            if self._logger:
-                self._logger.info(e)
-
             raise RuntimeError('GDAL raised an exception when opening ' +
                                self._filePath + '.')
 

@@ -18,6 +18,7 @@ from core.model.SystemCommand import SystemCommand
 class GeospatialImageFile(ImageFile):
 
     FILE_KEY = 'PathToFile'
+    LOGGER_KEY = 'logger'
     SRS_KEY = 'SpatialReference'
 
     # -------------------------------------------------------------------------
@@ -233,6 +234,7 @@ class GeospatialImageFile(ImageFile):
     def __getstate__(self):
 
         state = {GeospatialImageFile.FILE_KEY: self.fileName(),
+                 GeospatialImageFile.LOGGER_KEY: self.logger,
                  GeospatialImageFile.SRS_KEY: self.srs().ExportToProj4()}
 
         return state
@@ -246,4 +248,7 @@ class GeospatialImageFile(ImageFile):
 
         srs = SpatialReference()
         srs.ImportFromProj4(state[GeospatialImageFile.SRS_KEY])
-        self.__init__(state[GeospatialImageFile.FILE_KEY], srs)
+        
+        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+                      srs,
+                      state[GeospatialImageFile.LOGGER_KEY])
