@@ -1,4 +1,5 @@
 import logging
+import os
 import unittest
 
 from osgeo.osr import SpatialReference
@@ -14,7 +15,7 @@ from core.model.FootprintsQuery import FootprintsQuery
 #
 # python -m unittest discover model/tests/
 # python -m unittest model.tests.test_FootprintsQuery
-# python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
+# python -m unittest core.model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
 # python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testConsistentResults
 # ------------------------------------------------------------------------------
 class FootprintsQueryTestCase(unittest.TestCase):
@@ -114,12 +115,46 @@ class FootprintsQueryTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testWithDgFiles(self):
 
+        # ---
+        # We need only one scene to test.  Footprints is unreliable, so
+        # collect many scenes to get one valid one.
+        # ---
         fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
-        fpq.setMaximumScenes(1)
-        fpScenes1 = fpq.getScenes()
+        fpq.setMaximumScenes(100)
+        fpScenes = fpq.getScenes()
 
-        for ntfPath in fpScenes1:
+        for fps in fpScenes:
 
-            dg = DgFile(ntfPath)
-            dg.year()
-            dg.fileName()
+            if os.path.exists(fps.fileName()):
+
+                dg = DgFile(fps.fileName())
+                dg.year()
+                dg.fileName()
+
+                break
+
+    # -------------------------------------------------------------------------
+    # testFpScenesToFileNames
+    # -------------------------------------------------------------------------
+    def testFpScenesToFileNames(self):
+
+        fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
+        fpq.setMaximumScenes(5)
+        fpScenes = fpq.getScenes()
+        fileNames = fpq.fpScenesToFileNames(fpScenes)
+        foundValidScene = False
+
+        for fileName in fileNames:
+
+            # ---
+            # Footprints is unreliable, so  collect several scenes to get at
+            # least one valid one.
+            # ---
+            if os.path.exists(fileName):
+
+                foundValidScene = True
+                dg = DgFile(fileName)
+                dg.year()
+                dg.fileName()
+
+        self.assertTrue(foundValidScene)

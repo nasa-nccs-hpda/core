@@ -10,6 +10,7 @@ from osgeo.osr import SpatialReference
 from osgeo import osr
 
 from core.model.Envelope import Envelope
+from core.model.FootprintsScene import FootprintsScene
 from core.model.SystemCommand import SystemCommand
 
 
@@ -326,10 +327,6 @@ class FootprintsQuery(object):
 
         if len(where):
 
-            # cmd += unicode(' -sql "select * from nga_inventory_canon ') + \
-            #        where + \
-            #        unicode(' order by ACQ_DATE DESC"')
-
             cmd += ' -sql "select * from nga_footprint_master_v2 ' + \
                    where + \
                    ' order by ACQ_DATE DESC"'
@@ -342,16 +339,28 @@ class FootprintsQuery(object):
 
         resultGML = minidom.parse(queryResult)
         features = resultGML.getElementsByTagName('gml:featureMember')
-        dgFileNames = []
 
-        for feature in features:
+        # dgFileNames = []
+        #
+        # for feature in features:
+        #
+        #     dgFileNames.append(feature.
+        #                        getElementsByTagName('ogr:s_filepath')[0].
+        #                        childNodes[0].
+        #                        nodeValue)
+        #
+        # return dgFileNames
 
-            dgFileNames.append(feature.
-                               getElementsByTagName('ogr:s_filepath')[0].
-                               childNodes[0].
-                               nodeValue)
+        fpScenes = [FootprintsScene(f) for f in features]
 
-        return dgFileNames
+        return fpScenes
+
+    # -------------------------------------------------------------------------
+    # fpScenesToFileNames
+    # -------------------------------------------------------------------------
+    def fpScenesToFileNames(self, fpScenes):
+
+        return [f.fileName() for f in fpScenes]
 
     # -------------------------------------------------------------------------
     # _buildWhereClauseGdb
