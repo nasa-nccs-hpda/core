@@ -19,7 +19,6 @@ class FootprintsSceneTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testFootprintsScene(self):
 
-        # /att/nobackup/rlgill/.nccstmp/tmpk9afoll3
         sceneGML = None
 
         GML_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -27,7 +26,6 @@ class FootprintsSceneTestCase(unittest.TestCase):
 
         sceneGML = minidom.parse(GML_FILE)
         features = sceneGML.getElementsByTagName('gml:featureMember')[0]
-
         fps = FootprintsScene(features)
 
         self.assertEqual(fps.fileName(),
@@ -41,3 +39,7 @@ class FootprintsSceneTestCase(unittest.TestCase):
 
         self.assertEqual(fps.stripName(),
                          'WV01_102001003A7E9A00_P1BS_502788423060_01')
+
+        # Test retrieving a tag that does not exist.
+        with self.assertRaises(RuntimeError):
+            fps._getValue('doesNotExist')

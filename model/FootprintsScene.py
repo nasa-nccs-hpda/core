@@ -21,8 +21,21 @@ class FootprintsScene(object):
     # getValue
     # --------------------------------------------------------------------------
     def _getValue(self, tagName):
-        return self.gml.getElementsByTagName(tagName)[0].childNodes[0]. \
-               nodeValue
+
+        # return self.gml.getElementsByTagName(tagName)[0].childNodes[0]. \
+        #        nodeValue
+
+        tag = self.gml.getElementsByTagName(tagName)
+
+        if tag.length == 0:
+
+            raise RuntimeError('Unable to get the value for the GML tag, ' +
+                               tagName +
+                               ' because that tag is not in the GML.')
+
+        valueNode = tag[0].childNodes[0]
+
+        return valueNode.nodeValue if valueNode else None
 
     # --------------------------------------------------------------------------
     # pairName
