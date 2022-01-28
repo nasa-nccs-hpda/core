@@ -46,7 +46,8 @@
       <ogr:added_date>2020-07-03T00:00:00Z</ogr:added_date>
       <ogr:file_sz>0.49632614</ogr:file_sz>
       <ogr:avsunazim>162.90370178</ogr:avsunazim>
-      <ogr:avtargetaz>179.3343811</ogr:avtargetaz>
+      <!-- ><ogr:avtargetaz>179.3343811</ogr:avtargetaz> -->
+	  <ogr:avtargetaz xsi:nil="true"/>
       <ogr:stereopair>102001003A7E9A00</ogr:stereopair>
       <ogr:pairname>WV01_20150410_102001003C718E00_102001003A7E9A00</ogr:pairname>
       <ogr:acq_date>2015-04-10T00:00:00Z</ogr:acq_date>

@@ -33,9 +33,9 @@ class FootprintsScene(object):
                                tagName +
                                ' because that tag is not in the GML.')
 
-        valueNode = tag[0].childNodes[0]
+        childNodes = tag[0].childNodes
 
-        return valueNode.nodeValue if valueNode else None
+        return childNodes[0].nodeValue if childNodes.length > 0 else None
 
     # --------------------------------------------------------------------------
     # pairName

@@ -43,3 +43,6 @@ class FootprintsSceneTestCase(unittest.TestCase):
         # Test retrieving a tag that does not exist.
         with self.assertRaises(RuntimeError):
             fps._getValue('doesNotExist')
+            
+        # Test retrieving a null tag.
+        self.assertIsNone(fps._getValue('ogr:avtargetaz'))
