@@ -393,6 +393,25 @@ class FootprintsQuery(object):
         if not first:
             whereClause += ')'
 
+        # Add scene list.
+        first = True
+
+        for scene in self.scenes:
+
+            if first:
+
+                first = False
+
+                whereClause += ' AND ('
+
+            else:
+                whereClause += ' OR '
+
+            whereClause += 'S_FILEPATH=' + "'" + scene + "'"
+
+        if not first:
+            whereClause += ')'
+
         # Add pairs only clause.
         if self.pairsOnly:
             whereClause += ' AND (pairname IS NOT NULL)'
