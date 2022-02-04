@@ -197,6 +197,17 @@ class FootprintsQuery(object):
         return self.getScenesFromGdb()
 
     # -------------------------------------------------------------------------
+    # getScenesFromResultsFile
+    # -------------------------------------------------------------------------
+    def getScenesFromResultsFile(self, resultsFile):
+        
+        resultGML = minidom.parse(resultsFile)
+        features = resultGML.getElementsByTagName('gml:featureMember')
+        fpScenes = [FootprintsScene(f) for f in features]
+        
+        return fpScenes
+        
+    # -------------------------------------------------------------------------
     # getScenesFromPostgres
     # -------------------------------------------------------------------------
     # def getScenesFromPostgres(self):
@@ -337,22 +348,24 @@ class FootprintsQuery(object):
         cmd += ' "' + queryResult + '"  "' + fpFile + '" '
         SystemCommand(cmd, logger=self.logger, raiseException=True)
 
-        resultGML = minidom.parse(queryResult)
-        features = resultGML.getElementsByTagName('gml:featureMember')
-
-        # dgFileNames = []
+        # resultGML = minidom.parse(queryResult)
+        # features = resultGML.getElementsByTagName('gml:featureMember')
         #
-        # for feature in features:
+        # # dgFileNames = []
+        # #
+        # # for feature in features:
+        # #
+        # #     dgFileNames.append(feature.
+        # #                        getElementsByTagName('ogr:s_filepath')[0].
+        # #                        childNodes[0].
+        # #                        nodeValue)
+        # #
+        # # return dgFileNames
         #
-        #     dgFileNames.append(feature.
-        #                        getElementsByTagName('ogr:s_filepath')[0].
-        #                        childNodes[0].
-        #                        nodeValue)
-        #
-        # return dgFileNames
+        # fpScenes = [FootprintsScene(f) for f in features]
 
-        fpScenes = [FootprintsScene(f) for f in features]
-
+        fpScenes = self.getScenesFromResultsFile(queryResult)
+        
         return fpScenes
 
     # -------------------------------------------------------------------------

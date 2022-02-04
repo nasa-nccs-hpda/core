@@ -91,7 +91,7 @@ class FootprintsQueryTestCase(unittest.TestCase):
         self.assertEqual(len(fpScenes1), len(fpScenes2))
 
         for i in range(len(fpScenes1)):
-            self.assertEqual(fpScenes1[i], fpScenes2[i])
+            self.assertEqual(fpScenes1[i].fileName(), fpScenes2[i].fileName())
 
     # -------------------------------------------------------------------------
     # testSwir
@@ -107,7 +107,7 @@ class FootprintsQueryTestCase(unittest.TestCase):
 
         for ntfPath in fpScenes1:
 
-            dg = DgFile(ntfPath)
+            dg = DgFile(ntfPath.fileName())
             self.assertEqual(dg.specTypeCode(), 'SWIR')
 
     # -------------------------------------------------------------------------
