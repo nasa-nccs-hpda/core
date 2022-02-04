@@ -3,10 +3,10 @@ import os
 from redis import exceptions
 import subprocess
 import sys
-import tempfile
 
 from core.model.CeleryConfiguration import app
 from core.model.SystemCommand import SystemCommand
+
 
 # -----------------------------------------------------------------------------
 # class ILProcessController
@@ -36,20 +36,14 @@ from core.model.SystemCommand import SystemCommand
 #
 # Standard Python system utilities (i.e., os.system(), subprocess.run(),
 # kill(), pkill()) are used to invoke parameterized commands for:
-# a) starting the Redis server
-# b) registering the Celery workers, and
-# c) shutting down the Redis server and Celery workers.
+# a) registering the Celery workers, and
+# b) shutting down the Celery workers.
 #
-# Note that the Redis server acts as the backend that maintains state for
-# Celery transactions.  This could have been implemented with brokers like
-# RabbitMQ or Amazon SQS; however, Redis presented installation simplicity.
-
+# Note that the Redis server is a container-wide daemon. We access the port
+# number through an environemt variable.
 # -----------------------------------------------------------------------------
-
-
 class ILProcessController():
 
-    backendProcessId = 0
     celeryConfig = None
 
     def __init__(self, celeryConfig) -> None:
@@ -62,26 +56,12 @@ class ILProcessController():
     # -------------------------------------------------------------------------
     def __enter__(self):
 
-        print('In ILProcessController.__enter__()')
+        print('In ILProcessController.__enter__() {}'.format(os.getpid()))
 
         try:
 
-            # Retrieve configuration port - default to 6380
-            _backendPort = app.conf.redis_port
-            _backendPort = 6380 if _backendPort is None \
-                else _backendPort
-
-            # Start the Celery Server
-            ILProcessController.backendProcessId = \
-                (subprocess.Popen(["/usr/local/bin/redis-server",
-                                   "--protected-mode",
-                                   "no",
-                                   "--port",
-                                   str(_backendPort)],
-                                  stdout=subprocess.PIPE)).pid
-
-            print("Redis port = ", _backendPort,
-                  "ProcessId = ", ILProcessController.backendProcessId)
+            _backendPort = os.environ['REDIS_PORT']
+            print("Redis port = ", _backendPort)
 
             # Retrieve path to configuration file  - default to model
             ILProcessController.celeryConfig = self._celeryConfig
@@ -121,15 +101,19 @@ class ILProcessController():
     def __exit__(self, type, value, traceback):
 
         try:
-            print('In ILProcessController.__exit__()',
-                  ILProcessController.backendProcessId)
+            print('In ILProcessController.__exit__() {}'.format(os.getpid()))
+
+            processToKill = '\"{} worker -Q {}\"'.format(
+                ILProcessController.celeryConfig,
+                os.getpid())
+            
+            print("PROCESS TO KILL")
+            print(processToKill)
+            print("END PROCESS TO KILL")
 
             # Shutdown the Celery workers
-            shutdownWorkers = "/usr/bin/pkill -9 -f  " + \
-                              ILProcessController.celeryConfig
+            shutdownWorkers = "/usr/bin/pkill -9 -f {}".format(processToKill)
             SystemCommand(shutdownWorkers, None, True)
-
-            return True
 
         except exceptions.ConnectionError as inst:
             print("Connection Error ignore: {}".format(inst))

@@ -1,5 +1,4 @@
 from celery import Celery
-from socket import socket
 import os
 
 
@@ -8,14 +7,7 @@ import os
 #
 # Contains Celery/Redis server configuration
 # -----------------------------------------------------------------------------
-
-# Initialize defaults and add to context
-port = 6388
-
-with socket() as s:
-    s.bind(('', 0))
-    # To automatically find a free port, uncomment the next line:
-    # port = s.getsockname()[1]
+port = os.environ['REDIS_PORT']
 
 broker = 'redis://'
 host = 'localhost'
