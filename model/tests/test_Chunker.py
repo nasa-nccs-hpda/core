@@ -314,11 +314,11 @@ class ChunkerTestCase(unittest.TestCase):
     def testMultipleBands(self):
 
         # Image is 653 x 7074 x 425
-        testFile = '/att/pubrepo/ABoVE/archived_data/ORNL/' + \
-                   'ABoVE_Airborne_AVIRIS_NG_CORRUPT/data/' + \
+        testFile = '/css/above/daac.ornl.gov/daacdata/above/' + \
+                   'ABoVE_Airborne_AVIRIS_NG/data/' + \
                    'ang20180729t210144rfl/ang20180729t210144_rfl_v2r2/' + \
                    'ang20180729t210144_corr_v2r2_img'
-
+                   
         c = Chunker(testFile)
         c.setChunkSize(50, 75)
         loc, chunk = c.getChunk()
