@@ -10,6 +10,7 @@ from osgeo.osr import SpatialReference
 from osgeo import osr
 
 from core.model.Envelope import Envelope
+from core.model.FootprintsScene import FootprintsScene
 from core.model.SystemCommand import SystemCommand
 
 
@@ -196,6 +197,17 @@ class FootprintsQuery(object):
         return self.getScenesFromGdb()
 
     # -------------------------------------------------------------------------
+    # getScenesFromResultsFile
+    # -------------------------------------------------------------------------
+    def getScenesFromResultsFile(self, resultsFile):
+        
+        resultGML = minidom.parse(resultsFile)
+        features = resultGML.getElementsByTagName('gml:featureMember')
+        fpScenes = [FootprintsScene(f) for f in features]
+        
+        return fpScenes
+        
+    # -------------------------------------------------------------------------
     # getScenesFromPostgres
     # -------------------------------------------------------------------------
     # def getScenesFromPostgres(self):
@@ -326,10 +338,6 @@ class FootprintsQuery(object):
 
         if len(where):
 
-            # cmd += unicode(' -sql "select * from nga_inventory_canon ') + \
-            #        where + \
-            #        unicode(' order by ACQ_DATE DESC"')
-
             cmd += ' -sql "select * from nga_footprint_master_v2 ' + \
                    where + \
                    ' order by ACQ_DATE DESC"'
@@ -340,18 +348,32 @@ class FootprintsQuery(object):
         cmd += ' "' + queryResult + '"  "' + fpFile + '" '
         SystemCommand(cmd, logger=self.logger, raiseException=True)
 
-        resultGML = minidom.parse(queryResult)
-        features = resultGML.getElementsByTagName('gml:featureMember')
-        dgFileNames = []
+        # resultGML = minidom.parse(queryResult)
+        # features = resultGML.getElementsByTagName('gml:featureMember')
+        #
+        # # dgFileNames = []
+        # #
+        # # for feature in features:
+        # #
+        # #     dgFileNames.append(feature.
+        # #                        getElementsByTagName('ogr:s_filepath')[0].
+        # #                        childNodes[0].
+        # #                        nodeValue)
+        # #
+        # # return dgFileNames
+        #
+        # fpScenes = [FootprintsScene(f) for f in features]
 
-        for feature in features:
+        fpScenes = self.getScenesFromResultsFile(queryResult)
+        
+        return fpScenes
 
-            dgFileNames.append(feature.
-                               getElementsByTagName('ogr:s_filepath')[0].
-                               childNodes[0].
-                               nodeValue)
+    # -------------------------------------------------------------------------
+    # fpScenesToFileNames
+    # -------------------------------------------------------------------------
+    def fpScenesToFileNames(self, fpScenes):
 
-        return dgFileNames
+        return [f.fileName() for f in fpScenes]
 
     # -------------------------------------------------------------------------
     # _buildWhereClauseGdb
@@ -380,6 +402,25 @@ class FootprintsQuery(object):
                 whereClause += ' OR '
 
             whereClause += 'SENSOR=' + "'" + sensor + "'"
+
+        if not first:
+            whereClause += ')'
+
+        # Add scene list.
+        first = True
+
+        for scene in self.scenes:
+
+            if first:
+
+                first = False
+
+                whereClause += ' AND ('
+
+            else:
+                whereClause += ' OR '
+
+            whereClause += 'S_FILEPATH=' + "'" + scene + "'"
 
         if not first:
             whereClause += ')'

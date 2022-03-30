@@ -1,4 +1,5 @@
 import logging
+import os
 import unittest
 
 from osgeo.osr import SpatialReference
@@ -14,7 +15,7 @@ from core.model.FootprintsQuery import FootprintsQuery
 #
 # python -m unittest discover model/tests/
 # python -m unittest model.tests.test_FootprintsQuery
-# python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
+# python -m unittest core.model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testAddAoI
 # python -m unittest model.tests.test_FootprintsQuery.FootprintsQueryTestCase.testConsistentResults
 # ------------------------------------------------------------------------------
 class FootprintsQueryTestCase(unittest.TestCase):
@@ -90,7 +91,7 @@ class FootprintsQueryTestCase(unittest.TestCase):
         self.assertEqual(len(fpScenes1), len(fpScenes2))
 
         for i in range(len(fpScenes1)):
-            self.assertEqual(fpScenes1[i], fpScenes2[i])
+            self.assertEqual(fpScenes1[i].fileName(), fpScenes2[i].fileName())
 
     # -------------------------------------------------------------------------
     # testSwir
@@ -106,7 +107,7 @@ class FootprintsQueryTestCase(unittest.TestCase):
 
         for ntfPath in fpScenes1:
 
-            dg = DgFile(ntfPath)
+            dg = DgFile(ntfPath.fileName())
             self.assertEqual(dg.specTypeCode(), 'SWIR')
 
     # -------------------------------------------------------------------------
@@ -114,12 +115,61 @@ class FootprintsQueryTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testWithDgFiles(self):
 
+        # ---
+        # We need only one scene to test.  Footprints is unreliable, so
+        # collect many scenes to get one valid one.
+        # ---
         fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
-        fpq.setMaximumScenes(1)
-        fpScenes1 = fpq.getScenes()
+        fpq.setMaximumScenes(100)
+        fpScenes = fpq.getScenes()
 
-        for ntfPath in fpScenes1:
+        for fps in fpScenes:
 
-            dg = DgFile(ntfPath)
-            dg.year()
-            dg.fileName()
+            if os.path.exists(fps.fileName()):
+
+                dg = DgFile(fps.fileName())
+                dg.year()
+                dg.fileName()
+
+                break
+
+    # -------------------------------------------------------------------------
+    # testFpScenesToFileNames
+    # -------------------------------------------------------------------------
+    def testFpScenesToFileNames(self):
+
+        fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
+        fpq.setMaximumScenes(5)
+        fpScenes = fpq.getScenes()
+        fileNames = fpq.fpScenesToFileNames(fpScenes)
+        foundValidScene = False
+
+        for fileName in fileNames:
+
+            # ---
+            # Footprints is unreliable, so  collect several scenes to get at
+            # least one valid one.
+            # ---
+            if os.path.exists(fileName):
+
+                foundValidScene = True
+                dg = DgFile(fileName)
+                dg.year()
+                dg.fileName()
+
+        self.assertTrue(foundValidScene)
+
+    # -------------------------------------------------------------------------
+    # testSceneList
+    # -------------------------------------------------------------------------
+    def testSceneList(self):
+
+        SCENE = '/css/nga/WV01/1B/2015/100/WV01_102001003A7E9A00_X1BS_502788423060_01/WV01_20150410052955_102001003A7E9A00_15APR10052955-P1BS-502788423060_01_P005.ntf'
+
+        fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
+        fpq.setMaximumScenes(5)
+        fpq.addScenesFromNtf([SCENE])
+        fpScenes = fpq.getScenes()
+
+        self.assertEqual(len(fpScenes), 1)
+        self.assertEqual(fpScenes[0].fileName(), SCENE)

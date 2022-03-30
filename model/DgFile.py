@@ -17,7 +17,7 @@ from core.model.SystemCommand import SystemCommand
 # class DgFile
 #
 # This class represents a Digital Globe file.  It is a single NITF file or a
-# GeoTiff with an XML counterpart.  It is uniqure because of the metadata tags
+# GeoTiff with an XML counterpart.  It is unique because of the metadata tags
 # within.
 # -----------------------------------------------------------------------------
 class DgFile(GeospatialImageFile):
@@ -537,3 +537,13 @@ class DgFile(GeospatialImageFile):
                 self._logger.info(e)
 
             return None
+
+    # -------------------------------------------------------------------------
+    # __setstate__
+    #
+    # e2 = pickle.loads(pickle.dumps(env))
+    # -------------------------------------------------------------------------
+    def __setstate__(self, state):
+
+        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+                      state[GeospatialImageFile.LOGGER_KEY])

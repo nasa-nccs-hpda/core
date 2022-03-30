@@ -1,4 +1,6 @@
 
+import logging
+import sys
 import unittest
 
 from core.model.DgFile import DgFile
@@ -98,3 +100,30 @@ class DgFileTestCase(unittest.TestCase):
                      '-M1BS-052807177090_01_P002.ntf')
                      
         self.assertIsNotNone(dgf._ulx)
+        
+    # -------------------------------------------------------------------------
+    # testGetSetState
+    # -------------------------------------------------------------------------
+    def testGetSetState(self):
+
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+        logger.addHandler(ch)
+
+        fileName1 = '/css/nga/WV02/1B/2010/215/' + \
+                     'WV02_103001000621E500_X1BS_052807177090_01/' + \
+                     'WV02_20100803220600_103001000621E500_10AUG03220600' + \
+                     '-M1BS-052807177090_01_P002.ntf'
+                     
+        dgf = DgFile(fileName1, logger)
+        dgfDump = dgf.__getstate__()
+        
+        fileName2 = '/css/nga/WV03/1B/2015/219/' + \
+                     'WV03_104001000F2D9E00_X1BS_500495393030_01/' + \
+                     'WV03_20150807213524_104001000F2D9E00_15AUG07213524' + \
+                     '-M1BS-500495393030_01_P001.ntf'
+        
+        dgf2 = DgFile(fileName2)
+        dgf2.__setstate__(dgfDump)

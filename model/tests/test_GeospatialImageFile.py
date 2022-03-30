@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import logging
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -30,6 +32,16 @@ class GeospatialImageFileTestCase(unittest.TestCase):
     # createTestFile
     # -------------------------------------------------------------------------
     def _createTestFile(self, createUTM=False):
+
+        # ---
+        # Set up a logger because serialization was causing loggers to point
+        # to the SpatialReferences.
+        # ---
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+        logger.addHandler(ch)
 
         testFile = None
 
@@ -59,7 +71,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
             srs.ImportFromEPSG(4326)
             srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-        return GeospatialImageFile(workingCopy, srs)
+        return GeospatialImageFile(workingCopy, srs, logger)
 
     # -------------------------------------------------------------------------
     # testClipReproject
@@ -272,14 +284,16 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile2 = GeospatialImageFile(workingCopy, srs)
 
         self.assertNotEqual(imageFile.fileName(), imageFile2.fileName())
-
+        self.assertEqual(type(imageFile.logger), logging.RootLogger)
+        
         self.assertNotEqual(imageFile.srs().ExportToProj4(),
                             imageFile2.srs().ExportToProj4())
-
+        
         imageFileDump = imageFile.__getstate__()
         imageFile2.__setstate__(imageFileDump)
-
+        
         self.assertEqual(imageFile.fileName(), imageFile2.fileName())
+        self.assertEqual(type(imageFile2.logger), logging.RootLogger)
 
         # ---
         # The SpatialReference object does not export the same string as the
