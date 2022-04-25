@@ -338,6 +338,48 @@ class DgFile(GeospatialImageFile):
             return None
 
     # -------------------------------------------------------------------------
+    # getStripIndex
+    # -------------------------------------------------------------------------
+    def getStripIndex(self):
+        
+        return os.path.splitext(self.fileName())[0].split('_')[-1]
+        
+    # -------------------------------------------------------------------------
+    # isMate
+    #
+    # A pair name is *only available from Footprints*, and it looks like
+    # WV02_20181005_10300100889D0300_10300100869C3C00, where the pair consists
+    # of mates identified by the catalog IDs 10300100889D0300 and
+    # 10300100869C3C00.  Furthermore, these catalog IDs represent strips, so
+    # there can be multiple scenes for each ID.  To determine the mate, *match
+    # the last part of the file name* from the file naming convention.  This is
+    # what happens when non-computer scientists design systems.
+    # -------------------------------------------------------------------------
+    def isMate(self, pairName, otherDgf):
+        
+        pairCats = pairName.split('_')[2:]
+        thisCat = self.getCatalogId()
+        
+        if thisCat not in pairCats:
+            
+            raise ValueError('Pair name, ' +
+                             str(pairName) +
+                             ' is unassociated with this file.')
+        
+        otherCat = otherDgf.getCatalogId()
+        
+        if otherCat not in pairCats:
+            return False
+            
+        if otherCat == thisCat:
+            return False
+            
+        if self.getStripIndex() != otherDgf.getStripIndex():
+            return False
+            
+        return True
+        
+    # -------------------------------------------------------------------------
     # isMultispectral()
     # -------------------------------------------------------------------------
     def isMultispectral(self):
