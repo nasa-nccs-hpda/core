@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
+
 from redis import exceptions
 import subprocess
 import sys
 
-from core.model.CeleryConfiguration import app
+from core.model.CeleryConfiguration import *
 from core.model.SystemCommand import SystemCommand
-
 
 # -----------------------------------------------------------------------------
 # class ILProcessController
@@ -36,18 +35,19 @@ from core.model.SystemCommand import SystemCommand
 #
 # Standard Python system utilities (i.e., os.system(), subprocess.run(),
 # kill(), pkill()) are used to invoke parameterized commands for:
-# a) registering the Celery workers, and
-# b) shutting down the Celery workers.
+# a) starting the Redis server
+# b) registering the Celery workers, and
+# c) shutting down the Redis server and Celery workers.
 #
-# Note that the Redis server is a container-wide daemon. We access the port
-# number through an environemt variable.
+# Note that the Redis server acts as the backend that maintains state for
+# Celery transactions.  This could have been implemented with brokers like
+# RabbitMQ or Amazon SQS; however, Redis presented installation simplicity.
+
 # -----------------------------------------------------------------------------
 class ILProcessController():
 
+    backendProcessId = 0
     celeryConfig = None
-
-    def __init__(self, celeryConfig) -> None:
-        self._celeryConfig = celeryConfig
 
     # -------------------------------------------------------------------------
     # __enter__
@@ -56,66 +56,86 @@ class ILProcessController():
     # -------------------------------------------------------------------------
     def __enter__(self):
 
-        print('In ILProcessController.__enter__() {}'.format(os.getpid()))
+        print('In ILProcessController.__enter__()')
 
         try:
 
-            _backendPort = os.environ['REDIS_PORT']
-            print("Redis port = ", _backendPort)
+            # Retrieve configuration port - default to 6380
+            _backendPort = app.conf.get(IL_PORT)
+            _backendPort = '6380' if _backendPort == None else _backendPort
+
+            # Start the Celery Server
+            ILProcessController.backendProcessId = \
+                (subprocess.Popen(["/usr/local/bin/redis-server",
+                    "--protected-mode",
+                    "no",
+                    "--port",
+                    str(_backendPort)],
+                    stdout=subprocess.PIPE)).pid
+
+            print ("Redis port = ", _backendPort,
+                   "ProcessId = ", ILProcessController.backendProcessId)
 
             # Retrieve path to configuration file  - default to model
-            ILProcessController.celeryConfig = self._celeryConfig
+            _celeryConfig = app.conf.get(IL_CONFIG)
+            ILProcessController.celeryConfig = 'model.CeleryConfiguration' \
+                if _celeryConfig == None else _celeryConfig
 
             # Retrieve concurrency level - default to max available
-            _concurrency = app.conf.worker_concurrency
-            _concurrency = "" if _concurrency is None \
-                else " --concurrency={}".format(_concurrency)
+            _concurrency = app.conf.get(IL_CONCURRENCY)
+            _concurrency = "" if _concurrency == None \
+                else " --concurrency=" + _concurrency
 
             # Retrieve log level - default to 'info'
-            _logLevel = app.conf.worker_stdouts_level
-            _logLevel = 'INFO' if _logLevel is None \
+            _logLevel = app.conf.get(IL_LOGLEVEL)
+            _logLevel = 'info' if _logLevel == None \
                 else _logLevel
 
             # Start the Celery Workers
             _worker = "/usr/local/bin/celery -A " + \
-                ILProcessController.celeryConfig + " worker " + \
-                _concurrency + \
-                " -Q {}".format(os.getpid()) + \
-                " --loglevel={}".format(_logLevel) + \
-                " &"
+                        ILProcessController.celeryConfig + " worker " + \
+                        _concurrency + \
+                        " --loglevel=" + _logLevel + \
+                        " &"
 
             retcode = subprocess.run(_worker,
                                      shell=True,
                                      check=True)
-            print(retcode)
+            print (retcode)
 
         except OSError as e:
             print("Execution failed:", e, file=sys.stderr)
+
 
     # -------------------------------------------------------------------------
     # __exit__
     #
     # Shutdown Redis server and Celery workers
     # -------------------------------------------------------------------------
-
     def __exit__(self, type, value, traceback):
 
         try:
-            print('In ILProcessController.__exit__() {}'.format(os.getpid()))
-
-            processToKill = '\"{} worker -Q {}\"'.format(
-                ILProcessController.celeryConfig,
-                os.getpid())
+            print('In ILProcessController.__exit__()',
+                  ILProcessController.backendProcessId)
 
             # Shutdown the Celery workers
-            shutdownWorkers = "/usr/bin/pkill -9 -f {}".format(processToKill)
+            shutdownWorkers = "/usr/bin/pkill -9 -f  " + \
+                              ILProcessController.celeryConfig
             SystemCommand(shutdownWorkers, None, True)
 
+            # Shutdown the Celery Server
+            shutdownServer = str("/bin/kill -9 " +
+                                 str(ILProcessController.backendProcessId))
+            SystemCommand(shutdownServer, None, True)
+
+            return True
+
         except exceptions.ConnectionError as inst:
-            print("Connection Error ignore: {}".format(inst))
+            print("Connection Error ignore")
         except OSError as e:
             print("Execution failed:", e, file=sys.stderr)
         except Exception as inst:
             print(type(inst))  # the exception instance
             print(inst.args)  # arguments stored in .args
             print(inst)  # __str__ allows args to be printed directly,
+
