@@ -69,7 +69,7 @@ class ILProcessController():
             # Retrieve concurrency level - default to max available
             _concurrency = app.conf.worker_concurrency
             _concurrency = "" if _concurrency is None \
-                else " --concurrency=" + _concurrency
+                else " --concurrency={}".format(_concurrency)
 
             # Retrieve log level - default to 'info'
             _logLevel = app.conf.worker_stdouts_level
@@ -81,7 +81,7 @@ class ILProcessController():
                 ILProcessController.celeryConfig + " worker " + \
                 _concurrency + \
                 " -Q {}".format(os.getpid()) + \
-                " --loglevel=" + _logLevel + \
+                " --loglevel={}".format(_logLevel) + \
                 " &"
 
             retcode = subprocess.run(_worker,
@@ -106,10 +106,6 @@ class ILProcessController():
             processToKill = '\"{} worker -Q {}\"'.format(
                 ILProcessController.celeryConfig,
                 os.getpid())
-            
-            print("PROCESS TO KILL")
-            print(processToKill)
-            print("END PROCESS TO KILL")
 
             # Shutdown the Celery workers
             shutdownWorkers = "/usr/bin/pkill -9 -f {}".format(processToKill)
