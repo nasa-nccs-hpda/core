@@ -107,10 +107,6 @@ class ILProcessController():
                 ILProcessController.celeryConfig,
                 os.getpid())
 
-            print("PROCESS TO KILL")
-            print(processToKill)
-            print("END PROCESS TO KILL")
-
             # Shutdown the Celery workers
             shutdownWorkers = "/usr/bin/pkill -9 -f {}".format(processToKill)
             SystemCommand(shutdownWorkers, None, True)
