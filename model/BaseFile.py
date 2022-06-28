@@ -34,11 +34,3 @@ class BaseFile(object):
     def __str__(self):
         return self.fileName()
 
-    # -------------------------------------------------------------------------
-    # __eq__
-    # -------------------------------------------------------------------------
-    def __eq__(self, other):
-    
-        return self._filePath == other._filePath and \
-            self._filePath is not None
-            
