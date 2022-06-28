@@ -39,3 +39,18 @@ class BaseFileTestCase(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             BaseFile(None)
+
+    # -------------------------------------------------------------------------
+    # testEq
+    # -------------------------------------------------------------------------
+    def testEq(self):
+        
+        bf1 = os.path.abspath(__file__)
+        bf2 = bf1
+        self.assertEqual(bf1, bf2)
+        
+        bf3 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                           'TSURF.nc')
+
+        self.assertNotEqual(bf1, bf3)  # "unequal" = "not equal"
+        
