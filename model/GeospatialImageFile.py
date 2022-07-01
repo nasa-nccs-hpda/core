@@ -24,10 +24,11 @@ class GeospatialImageFile(ImageFile):
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, pathToFile, spatialReference=None, logger=None):
+    def __init__(self, pathToFile, subdataset=None,
+                 spatialReference=None, logger=None):
 
         # Initialize the base class.
-        super(GeospatialImageFile, self).__init__(pathToFile)
+        super(GeospatialImageFile, self).__init__(pathToFile, subdataset)
 
         self.logger = logger
 
@@ -202,7 +203,7 @@ class GeospatialImageFile(ImageFile):
     def resample(self, xScale, yScale):
 
         cmd = self._getBaseCmd() + ' -tr ' + str(xScale) + ' ' + \
-              str(yScale)
+            str(yScale)
 
         # Finish the command.
         outFile = tempfile.mkstemp(suffix='.nc')[1]
@@ -248,7 +249,7 @@ class GeospatialImageFile(ImageFile):
 
         srs = SpatialReference()
         srs.ImportFromProj4(state[GeospatialImageFile.SRS_KEY])
-        
-        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+
+        self.__init__(state[GeospatialImageFile.FILE_KEY],
                       srs,
                       state[GeospatialImageFile.LOGGER_KEY])

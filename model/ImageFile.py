@@ -17,7 +17,7 @@ class ImageFile(BaseFile):
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, pathToFile, readOnly=True):
+    def __init__(self, pathToFile, subdataset=None, readOnly=True):
 
         # Initialize the base class.
         super(ImageFile, self).__init__(pathToFile)
@@ -30,7 +30,10 @@ class ImageFile(BaseFile):
 
         try:
             ro = gdalconst.GA_ReadOnly if readOnly else gdalconst.GF_Write
-            self._dataset = gdal.Open(self._filePath, ro)
+            self._dataset = gdal.Open(subdataset, ro) \
+                if subdataset else gdal.Open(pathToFile, ro)
+            
+            print(subdataset) if subdataset else print(pathToFile)
 
             if not self._dataset:
 
@@ -39,14 +42,14 @@ class ImageFile(BaseFile):
                                    self._filePath +
                                    '.')
 
-        except Exception as e:
+        except Exception:
 
             raise RuntimeError('GDAL raised an exception when opening ' +
                                self._filePath + '.')
 
     # -------------------------------------------------------------------------
-    # _getDataset
+    # getDataset
     # -------------------------------------------------------------------------
-    def _getDataset(self):
+    def getDataset(self):
 
         return self._dataset
