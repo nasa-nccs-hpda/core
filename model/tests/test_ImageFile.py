@@ -29,4 +29,4 @@ class ImageFileTestCase(unittest.TestCase):
         imageFile = ImageFile(ImageFileTestCase.TEST_FILE)
 
         # Test _getDataset.
-        self.assertIsNotNone(imageFile._getDataset())
+        self.assertIsNotNone(imageFile.getDataset())

@@ -49,7 +49,9 @@ class DgFile(GeospatialImageFile):
         # below.
         # ---
         try:
-            super(DgFile, self).__init__(fileName, None, logger)
+            super(DgFile, self).__init__(fileName,
+                                         spatialReference=None,
+                                         logger=logger)
 
         except RuntimeError as e:
 
@@ -130,7 +132,7 @@ class DgFile(GeospatialImageFile):
         # bandNameList
         try:
             self.bandNameList = \
-                 [n.tag for n in self.imdTag if n.tag.startswith('BAND_')]
+                [n.tag for n in self.imdTag if n.tag.startswith('BAND_')]
 
         except Exception as e:
 
@@ -239,7 +241,7 @@ class DgFile(GeospatialImageFile):
         gdalBandIndex = int(self.bandNameList.index(bandName)) + 1
 
         baseName = os.path.basename(self.fileName().replace(self.extension,
-                                    '_b{}.tif'.format(gdalBandIndex)))
+                                                            '_b{}.tif'.format(gdalBandIndex)))
 
         tempBandFile = os.path.join(outputDir, baseName)
 
@@ -341,9 +343,9 @@ class DgFile(GeospatialImageFile):
     # getStripIndex
     # -------------------------------------------------------------------------
     def getStripIndex(self):
-        
+
         return os.path.splitext(self.fileName())[0].split('_')[-1]
-        
+
     # -------------------------------------------------------------------------
     # isMate
     #
@@ -356,29 +358,29 @@ class DgFile(GeospatialImageFile):
     # what happens when non-computer scientists design systems.
     # -------------------------------------------------------------------------
     def isMate(self, pairName, otherDgf):
-        
+
         pairCats = pairName.split('_')[2:]
         thisCat = self.getCatalogId()
-        
+
         if thisCat not in pairCats:
-            
+
             raise ValueError('Pair name, ' +
                              str(pairName) +
                              ' is unassociated with this file.')
-        
+
         otherCat = otherDgf.getCatalogId()
-        
+
         if otherCat not in pairCats:
             return False
-            
+
         if otherCat == thisCat:
             return False
-            
+
         if self.getStripIndex() != otherDgf.getStripIndex():
             return False
-            
+
         return True
-        
+
     # -------------------------------------------------------------------------
     # isMultispectral()
     # -------------------------------------------------------------------------
@@ -505,12 +507,12 @@ class DgFile(GeospatialImageFile):
     def srs(self):
 
         srs = self._dataset.GetSpatialRef()
-        
+
         if not srs:
             srs = SpatialReference()
             srs.ImportFromEPSG(4326)
             srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-            
+
         return srs
 
     # -------------------------------------------------------------------------
@@ -587,5 +589,5 @@ class DgFile(GeospatialImageFile):
     # -------------------------------------------------------------------------
     def __setstate__(self, state):
 
-        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+        self.__init__(state[GeospatialImageFile.FILE_KEY],
                       state[GeospatialImageFile.LOGGER_KEY])
