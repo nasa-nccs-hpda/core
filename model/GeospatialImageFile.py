@@ -18,16 +18,18 @@ from core.model.SystemCommand import SystemCommand
 class GeospatialImageFile(ImageFile):
 
     FILE_KEY = 'PathToFile'
+    SUBDATASET_KEY = 'subdataset'
     LOGGER_KEY = 'logger'
     SRS_KEY = 'SpatialReference'
 
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, pathToFile, spatialReference=None, logger=None):
+    def __init__(self, pathToFile, spatialReference=None,
+                 subdataset=None, logger=None):
 
         # Initialize the base class.
-        super(GeospatialImageFile, self).__init__(pathToFile)
+        super(GeospatialImageFile, self).__init__(pathToFile, subdataset)
 
         self.logger = logger
 
@@ -43,7 +45,7 @@ class GeospatialImageFile(ImageFile):
             return
 
         # Can the image file's projection be used as an SRS?
-        wkt = self._getDataset().GetProjection()
+        wkt = self.getDataset().GetProjection()
 
         if wkt:
 
@@ -126,14 +128,14 @@ class GeospatialImageFile(ImageFile):
         # be incorrect.  Passing the requested SRS keeps the axis order
         # consistent.
         # ---
-        self.__init__(self._filePath, outputSRS)
+        self.__init__(self._filePath, spatialReference=outputSRS)
 
     # -------------------------------------------------------------------------
     # envelope
     # -------------------------------------------------------------------------
     def envelope(self):
 
-        dataset = self._getDataset()
+        dataset = self.getDataset()
         xform = dataset.GetGeoTransform()
         xScale = xform[1]
         yScale = xform[5]
@@ -202,7 +204,7 @@ class GeospatialImageFile(ImageFile):
     def resample(self, xScale, yScale):
 
         cmd = self._getBaseCmd() + ' -tr ' + str(xScale) + ' ' + \
-              str(yScale)
+            str(yScale)
 
         # Finish the command.
         outFile = tempfile.mkstemp(suffix='.nc')[1]
@@ -211,14 +213,14 @@ class GeospatialImageFile(ImageFile):
         shutil.move(outFile, self._filePath)
 
         # Update the dataset.
-        self._getDataset()
+        self.getDataset()
 
     # -------------------------------------------------------------------------
     # scale
     # -------------------------------------------------------------------------
     def scale(self):
 
-        xform = self._getDataset().GetGeoTransform()
+        xform = self.getDataset().GetGeoTransform()
         return xform[1], xform[5]
 
     # -------------------------------------------------------------------------
@@ -229,13 +231,20 @@ class GeospatialImageFile(ImageFile):
         return self._dataset.GetSpatialRef()
 
     # -------------------------------------------------------------------------
+    # subdataset
+    # -------------------------------------------------------------------------
+    def subdataset(self):
+        return self._subdataset
+
+    # -------------------------------------------------------------------------
     # __getstate__
     # -------------------------------------------------------------------------
     def __getstate__(self):
 
         state = {GeospatialImageFile.FILE_KEY: self.fileName(),
-                 GeospatialImageFile.LOGGER_KEY: self.logger,
-                 GeospatialImageFile.SRS_KEY: self.srs().ExportToProj4()}
+                 GeospatialImageFile.SRS_KEY: self.srs().ExportToProj4(),
+                 GeospatialImageFile.SUBDATASET_KEY: self.subdataset(),
+                 GeospatialImageFile.LOGGER_KEY: self.logger}
 
         return state
 
@@ -248,7 +257,8 @@ class GeospatialImageFile(ImageFile):
 
         srs = SpatialReference()
         srs.ImportFromProj4(state[GeospatialImageFile.SRS_KEY])
-        
-        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+
+        self.__init__(state[GeospatialImageFile.FILE_KEY],
                       srs,
+                      state[GeospatialImageFile.SUBDATASET_KEY],
                       state[GeospatialImageFile.LOGGER_KEY])
