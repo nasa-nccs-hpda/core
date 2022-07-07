@@ -23,8 +23,9 @@ class FootprintsSceneTestCase(unittest.TestCase):
                                 'scene.gml')
 
         sceneGML = minidom.parse(GML_FILE)
+        print('type = ', type(sceneGML))
         features = sceneGML.getElementsByTagName('gml:featureMember')[0]
-        fps = FootprintsScene(features)
+        fps = FootprintsScene(sceneGML=features)
 
         self.assertEqual(fps.fileName(),
                          '/css/nga/WV01/1B/2015/100/' +
@@ -40,10 +41,10 @@ class FootprintsSceneTestCase(unittest.TestCase):
 
         # Test retrieving a tag that does not exist.
         with self.assertRaises(RuntimeError):
-            fps._getValue('doesNotExist')
+            fps._getValue(sceneGML, 'doesNotExist')
 
         # Test retrieving a null tag.
-        self.assertIsNone(fps._getValue('ogr:avtargetaz'))
+        self.assertIsNone(fps._getValue(sceneGML, 'ogr:avtargetaz'))
 
     # -------------------------------------------------------------------------
     # testSorting
@@ -60,14 +61,31 @@ class FootprintsSceneTestCase(unittest.TestCase):
 
         sceneGML = minidom.parse(GML_FILE)
         features = sceneGML.getElementsByTagName('gml:featureMember')[0]
-        fps = FootprintsScene(features)
+        fps = FootprintsScene(sceneGML=features)
 
         GML_FILE2 = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  'scene2.gml')
 
         scene2GML = minidom.parse(GML_FILE2)
         features2 = sceneGML.getElementsByTagName('gml:featureMember')[0]
-        fps2 = FootprintsScene(features2)
+        fps2 = FootprintsScene(sceneGML=features2)
 
         sceneList = [fps, fps2]
         sceneList.sort()
+
+    # -------------------------------------------------------------------------
+    # testPgRecord
+    # -------------------------------------------------------------------------
+    def testPgRecord(self):
+        
+        file1 = '/css/nga/WV01/1B/2022/121/' + \
+                'WV01_10200100C37ECB00_P1BS_506406585010_01/' + \
+                'WV01_20220501072725_10200100C37ECB00_22MAY01072725' + \
+                '-P1BS-506406585010_01_P007.ntf'
+                
+        strip1 = 'WV01_10200100C37ECB00_P1BS_506406585010_01'
+        fps1 = FootprintsScene(pgRecord=(file1, None, strip1))
+        self.assertEqual(file1, fps1.fileName())
+        self.assertEqual(None, fps1.pairName())
+        self.assertEqual(strip1, fps1.stripName())
+        

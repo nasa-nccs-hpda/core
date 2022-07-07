@@ -2,7 +2,7 @@
 from datetime import datetime
 import logging
 import os
-# import psycopg2
+import psycopg2
 import tempfile
 from xml.dom import minidom
 
@@ -103,6 +103,10 @@ class FootprintsQuery(object):
         # Add level-1 data only, the start of a where clause.
         whereClause = "where (prod_code like '_1B_')"
 
+        # Include only valid records.
+        whereClause += " AND (status like 'validated%' or " + \
+                       "status = 'previewjpg_path_fail')"
+
         # Add sensor list.
         first = True
         sensors = self.sensors if self.sensors else FootprintsQuery.RUN_SENSORS
@@ -119,6 +123,26 @@ class FootprintsQuery(object):
 
             whereClause += 'SENSOR=' + "'" + sensor + "'"
 
+        if not first:
+            whereClause += ')'
+
+        # ---
+        # Add pair name list.
+        # ---
+        first = True
+        
+        for pairName in self.pairNames:
+            
+            if first:
+                
+                first = False
+                whereClause += ' AND ('
+                
+            else:
+                whereClause += ' OR '
+                
+            whereClause += 'pairname=' + "'" + pairName + "'"
+            
         if not first:
             whereClause += ')'
 
@@ -195,14 +219,25 @@ class FootprintsQuery(object):
                            '\'' + expandedEnv.ExportToWkt() + '\'' + \
                            ') = \'t\')'
 
-        return unicode(whereClause)
+        # Set bands.
+        if self.numBands > 0:
+            whereClause += ' AND (BANDS=\'' + str(self.numBands) + '\')'
+
+        # Set end date.  "2018/07/02 00:00:00"
+        whereClause += ' AND (ACQ_DATE<\'' + \
+                       self.endDate.strftime("%Y-%m-%d %H:%M:%S") + \
+                       '\')'
+
+        # return unicode(whereClause)
+        return whereClause
 
     # -------------------------------------------------------------------------
     # getScenes
     # -------------------------------------------------------------------------
     def getScenes(self):
 
-        return self.getScenesFromGdb()
+        # return self.getScenesFromGdb()
+        return self.getScenesFromPostgres()
 
     # -------------------------------------------------------------------------
     # getScenesFromResultsFile
@@ -217,45 +252,62 @@ class FootprintsQuery(object):
         
     # -------------------------------------------------------------------------
     # getScenesFromPostgres
+    #
+    # /usr/local/bin/pip3 install psycopg2-binary
     # -------------------------------------------------------------------------
-    # def getScenesFromPostgres(self):
-    #
-    #     # Establish a DB connection.
-    #     connection = psycopg2.connect(user='rlgill',
-    #                                   password='HWrkaBlFcHhlE7NAq20S',
-    #                                   host='arcdb02.atss.adapt.nccs.nasa.gov',
-    #                                   database='arcgis_temp_test')
-    #
-    #     cursor = connection.cursor()
-    #
-    #     # Run the query.
-    #     fields = ('sensor', 'acq_time', 'catalog_id', 'stereopair',
-    #               's_filepath')
-    #
-    #     cmd = 'select ' + \
-    #           ', '.join(fields) + \
-    #           ' from footprint_nga_inventory_master ' + \
-    #           self._buildWhereClausePostgres() + \
-    #           ' order by acq_time desc'
-    #
-    #     if self.maxScenes > 0:
-    #         cmd += ' limit ' + str(self.maxScenes)
-    #
-    #     if self.logger:
-    #         self.logger.info(cmd)
-    #
-    #     cursor.execute(cmd)
-    #
-    #     # Store the results in FootprintScenes.
-    #     dgFileNames = [record[4] for record in cursor]
-    #
-    #     # Close connections.
-    #     if(connection):
-    #
-    #         cursor.close()
-    #         connection.close()
-    #
-    #     return dgFileNames
+    def getScenesFromPostgres(self):
+
+        # ---
+        # Establish a DB connection.
+        # https://www.postgresql.org/docs/current/libpq-pgpass.html
+        # ---
+        # connection = psycopg2.connect(user='rlgill',
+        #                               password='HWrkaBlFcHhlE7NAq20S',
+        #                               host='arcdb02.atss.adapt.nccs.nasa.gov',
+        #                               database='arcgis_temp_test')
+
+        # connection = psycopg2.connect(passfile='/adapt/nobackup/people/rlgill/ATT70991.pgpass',
+        #                               host='arcdb04.atss.adapt.nccs.nasa.gov',
+        #                               database='arcgis')
+
+        # connection = psycopg2.connect(passfile='/adapt/nobackup/people/rlgill/ATT70991.pgpass')
+
+        connection = psycopg2.connect(user='nga_user',
+                                      password='8iO00c43TMusKRZoJqXt',
+                                      host='arcdb04.atss.adapt.nccs.nasa.gov',
+                                      port='5432',
+                                      database='arcgis')
+        
+        cursor = connection.cursor()
+
+        # Run the query.
+        fields = ('s_filepath', 'stereopair', 'strip_id')
+
+        cmd = 'select ' + \
+              ', '.join(fields) + \
+              ' from nga_footprint_master_v2 ' + \
+              self._buildWhereClausePostgres() + \
+              ' order by acq_time desc'
+
+        if self.maxScenes > 0:
+            cmd += ' limit ' + str(self.maxScenes)
+
+        if self.logger:
+            self.logger.info(cmd)
+
+        # psycopg2.extensions.cursor
+        cursor.execute(cmd)
+
+        # Store the results in FootprintScenes.
+        fpScenes = [FootprintsScene(record) for record in cursor]
+        
+        # Close connections.
+        if(connection):
+
+            cursor.close()
+            connection.close()
+
+        return fpScenes
 
     # -------------------------------------------------------------------------
     # setEndDate
