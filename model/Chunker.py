@@ -25,7 +25,7 @@ class Chunker(object):
     # -------------------------------------------------------------------------
     def __init__(self, imageFileName, readOnly=True):
 
-        self._imageFile = ImageFile(imageFileName, readOnly)
+        self._imageFile = ImageFile(imageFileName, readOnly=readOnly)
         self._xSize = 1
         self._ySize = 1
         self._curChunkLoc = (0, 0)
@@ -70,10 +70,10 @@ class Chunker(object):
         yExceeded = False
 
         # X dimension exceeded?
-        if xStart + xLen > self._imageFile._getDataset().RasterXSize:
+        if xStart + xLen > self._imageFile.getDataset().RasterXSize:
 
             # Limit the read in the X dimension.
-            xLen = self._imageFile._getDataset().RasterXSize - xStart
+            xLen = self._imageFile.getDataset().RasterXSize - xStart
 
             # If the length is 0, move to the next chunk row now.
             if xLen == 0:
@@ -94,10 +94,10 @@ class Chunker(object):
             xExceeded = True
 
         # Y dimension exceeded?  Must be the last row of the image.
-        if yStart + yLen > self._imageFile._getDataset().RasterYSize:
+        if yStart + yLen > self._imageFile.getDataset().RasterYSize:
 
             # Limit the read in the Y dimension.
-            yLen = self._imageFile._getDataset().RasterYSize - yStart
+            yLen = self._imageFile.getDataset().RasterYSize - yStart
 
             # ---
             # When yLen is 0, the next read cannot happen.  If yLen is not 0,
@@ -114,10 +114,10 @@ class Chunker(object):
 
         if not self.isComplete() and read:
 
-            rcChunk = self._imageFile._getDataset().ReadAsArray(xStart,
-                                                                yStart,
-                                                                xLen,
-                                                                yLen)
+            rcChunk = self._imageFile.getDataset().ReadAsArray(xStart,
+                                                               yStart,
+                                                               xLen,
+                                                               yLen)
 
             # Load the chunk as (x, y), instead of (row, column).
             chunk = rcChunk.transpose()
@@ -154,22 +154,22 @@ class Chunker(object):
     # -------------------------------------------------------------------------
     def setChunkAsColumn(self):
 
-        self.setChunkSize(1, self._imageFile._getDataset().RasterYSize)
+        self.setChunkSize(1, self._imageFile.getDataset().RasterYSize)
 
     # -------------------------------------------------------------------------
     # setChunkAsRow
     # -------------------------------------------------------------------------
     def setChunkAsRow(self):
 
-        self.setChunkSize(self._imageFile._getDataset().RasterXSize, 1)
+        self.setChunkSize(self._imageFile.getDataset().RasterXSize, 1)
 
     # -------------------------------------------------------------------------
     # setChunkToImage
     # -------------------------------------------------------------------------
     def setChunkToImage(self):
 
-        self.setChunkSize(self._imageFile._getDataset().RasterXSize,
-                          self._imageFile._getDataset().RasterYSize)
+        self.setChunkSize(self._imageFile.getDataset().RasterXSize,
+                          self._imageFile.getDataset().RasterYSize)
 
     # -------------------------------------------------------------------------
     # setChunkSize
@@ -180,25 +180,25 @@ class Chunker(object):
             raise RuntimeError('The sample size of a chunk must be greater ' +
                                'than zero.')
 
-        if _xSize > self._imageFile._getDataset().RasterXSize:
+        if _xSize > self._imageFile.getDataset().RasterXSize:
 
             raise RuntimeError('Sample size, ' +
                                str(_xSize) +
                                ', must be less than or equal to the image ' +
                                'sample size, ' +
-                               str(self._imageFile._getDataset().RasterXSize))
+                               str(self._imageFile.getDataset().RasterXSize))
 
         if _ySize < 1:
             raise RuntimeError('The line size of a chunk must be greater ' +
                                'than zero.')
 
-        if _ySize > self._imageFile._getDataset().RasterYSize:
+        if _ySize > self._imageFile.getDataset().RasterYSize:
 
             raise RuntimeError('Line size, ' +
                                str(_ySize) +
                                ', must be less than or equal to the image ' +
                                'line size, ' +
-                               str(self._imageFile._getDataset().RasterYSize))
+                               str(self._imageFile.getDataset().RasterYSize))
 
         self._xSize = _xSize
         self._ySize = _ySize

@@ -173,3 +173,18 @@ class FootprintsQueryTestCase(unittest.TestCase):
 
         self.assertEqual(len(fpScenes), 1)
         self.assertEqual(fpScenes[0].fileName(), SCENE)
+
+    # -------------------------------------------------------------------------
+    # testPairNames
+    # -------------------------------------------------------------------------
+    def testPairNames(self):
+        
+        fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
+        
+        fpq.addPairNames(['WV01_20170327_102001005D2FD200_1020010060DAAC00',
+                          'WV01_20180721_10200100742CD900_1020010076241B00'])
+
+        fpScenes = fpq.getScenes()
+                
+        self.assertEqual(len(fpScenes), 26)
+        

@@ -33,3 +33,4 @@ class BaseFile(object):
     # -------------------------------------------------------------------------
     def __str__(self):
         return self.fileName()
+

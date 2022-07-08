@@ -39,3 +39,4 @@ class BaseFileTestCase(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             BaseFile(None)
+

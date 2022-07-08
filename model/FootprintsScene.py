@@ -22,9 +22,6 @@ class FootprintsScene(object):
     # --------------------------------------------------------------------------
     def _getValue(self, tagName):
 
-        # return self.gml.getElementsByTagName(tagName)[0].childNodes[0]. \
-        #        nodeValue
-
         tag = self.gml.getElementsByTagName(tagName)
 
         if tag.length == 0:
@@ -36,6 +33,13 @@ class FootprintsScene(object):
         childNodes = tag[0].childNodes
 
         return childNodes[0].nodeValue if childNodes.length > 0 else None
+
+    # --------------------------------------------------------------------------
+    # __lt__
+    # --------------------------------------------------------------------------
+    def __lt__(self, other):
+
+        return self.fileName() < other.fileName()
 
     # --------------------------------------------------------------------------
     # pairName

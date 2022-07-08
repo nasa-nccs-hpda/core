@@ -19,8 +19,6 @@ class FootprintsSceneTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testFootprintsScene(self):
 
-        sceneGML = None
-
         GML_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 'scene.gml')
 
@@ -43,6 +41,33 @@ class FootprintsSceneTestCase(unittest.TestCase):
         # Test retrieving a tag that does not exist.
         with self.assertRaises(RuntimeError):
             fps._getValue('doesNotExist')
-            
+
         # Test retrieving a null tag.
         self.assertIsNone(fps._getValue('ogr:avtargetaz'))
+
+    # -------------------------------------------------------------------------
+    # testSorting
+    #
+    # This is to reproduce a client's run-time error and demonstrate that is
+    # is fixed.
+    # -------------------------------------------------------------------------
+    def testSorting(self):
+
+        print('In testSorting ...')
+
+        GML_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                'scene.gml')
+
+        sceneGML = minidom.parse(GML_FILE)
+        features = sceneGML.getElementsByTagName('gml:featureMember')[0]
+        fps = FootprintsScene(features)
+
+        GML_FILE2 = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'scene2.gml')
+
+        scene2GML = minidom.parse(GML_FILE2)
+        features2 = sceneGML.getElementsByTagName('gml:featureMember')[0]
+        fps2 = FootprintsScene(features2)
+
+        sceneList = [fps, fps2]
+        sceneList.sort()

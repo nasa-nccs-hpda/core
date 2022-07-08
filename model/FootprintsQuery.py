@@ -34,6 +34,7 @@ class FootprintsQuery(object):
         self._minOverlapInDegrees = 0.0
         self.numBands = -1
         self.pairsOnly = False
+        self.pairNames = []
         self.scenes = []
         self.sensors = []
 
@@ -69,6 +70,13 @@ class FootprintsQuery(object):
 
         self.catalogIDs.extend(catalogIDs)
 
+    # -------------------------------------------------------------------------
+    # addPairName
+    # -------------------------------------------------------------------------
+    def addPairNames(self, pairNames):
+        
+        self.pairNames.extend(pairNames)
+        
     # -------------------------------------------------------------------------
     # addScenesFromNtf
     # -------------------------------------------------------------------------
@@ -348,22 +356,6 @@ class FootprintsQuery(object):
         cmd += ' "' + queryResult + '"  "' + fpFile + '" '
         SystemCommand(cmd, logger=self.logger, raiseException=True)
 
-        # resultGML = minidom.parse(queryResult)
-        # features = resultGML.getElementsByTagName('gml:featureMember')
-        #
-        # # dgFileNames = []
-        # #
-        # # for feature in features:
-        # #
-        # #     dgFileNames.append(feature.
-        # #                        getElementsByTagName('ogr:s_filepath')[0].
-        # #                        childNodes[0].
-        # #                        nodeValue)
-        # #
-        # # return dgFileNames
-        #
-        # fpScenes = [FootprintsScene(f) for f in features]
-
         fpScenes = self.getScenesFromResultsFile(queryResult)
         
         return fpScenes
@@ -387,7 +379,9 @@ class FootprintsQuery(object):
         whereClause += " AND (status like 'validated%' or " + \
                        "status = 'previewjpg_path_fail')"
 
+        # ---
         # Add sensor list.
+        # ---
         first = True
         sensors = self.sensors if self.sensors else FootprintsQuery.RUN_SENSORS
 
@@ -406,7 +400,29 @@ class FootprintsQuery(object):
         if not first:
             whereClause += ')'
 
+        # ---
+        # Add pair name list.
+        # ---
+        first = True
+        
+        for pairName in self.pairNames:
+            
+            if first:
+                
+                first = False
+                whereClause += ' AND ('
+                
+            else:
+                whereClause += ' OR '
+                
+            whereClause += 'pairname=' + "'" + pairName + "'"
+            
+        if not first:
+            whereClause += ')'
+
+        # ---
         # Add scene list.
+        # ---
         first = True
 
         for scene in self.scenes:
@@ -429,7 +445,9 @@ class FootprintsQuery(object):
         if self.pairsOnly:
             whereClause += ' AND (pairname IS NOT NULL)'
 
+        # ---
         # Add the catalog ID list.
+        # ---
         first = True
 
         for catID in self.catalogIDs:

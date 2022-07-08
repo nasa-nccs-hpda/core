@@ -94,13 +94,13 @@ class DgFileTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testSrsError(self):
 
-        dgf = DgFile('/css/nga/WV02/1B/2010/215/' + 
+        dgf = DgFile('/css/nga/WV02/1B/2010/215/' +
                      'WV02_103001000621E500_X1BS_052807177090_01/' +
                      'WV02_20100803220600_103001000621E500_10AUG03220600' +
                      '-M1BS-052807177090_01_P002.ntf')
-                     
+
         self.assertIsNotNone(dgf._ulx)
-        
+
     # -------------------------------------------------------------------------
     # testGetSetState
     # -------------------------------------------------------------------------
@@ -113,17 +113,85 @@ class DgFileTestCase(unittest.TestCase):
         logger.addHandler(ch)
 
         fileName1 = '/css/nga/WV02/1B/2010/215/' + \
-                     'WV02_103001000621E500_X1BS_052807177090_01/' + \
-                     'WV02_20100803220600_103001000621E500_10AUG03220600' + \
-                     '-M1BS-052807177090_01_P002.ntf'
-                     
-        dgf = DgFile(fileName1, logger)
+            'WV02_103001000621E500_X1BS_052807177090_01/' + \
+            'WV02_20100803220600_103001000621E500_10AUG03220600' + \
+            '-M1BS-052807177090_01_P002.ntf'
+
+        dgf = DgFile(fileName1, logger=logger)
         dgfDump = dgf.__getstate__()
-        
+
         fileName2 = '/css/nga/WV03/1B/2015/219/' + \
-                     'WV03_104001000F2D9E00_X1BS_500495393030_01/' + \
-                     'WV03_20150807213524_104001000F2D9E00_15AUG07213524' + \
-                     '-M1BS-500495393030_01_P001.ntf'
-        
+            'WV03_104001000F2D9E00_X1BS_500495393030_01/' + \
+            'WV03_20150807213524_104001000F2D9E00_15AUG07213524' + \
+            '-M1BS-500495393030_01_P001.ntf'
+
         dgf2 = DgFile(fileName2)
         dgf2.__setstate__(dgfDump)
+
+    # -------------------------------------------------------------------------
+    # testGetStripIndex
+    # -------------------------------------------------------------------------
+    def testGetStripIndex(self):
+
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+        logger.addHandler(ch)
+
+        fileName1 = '/css/nga/WV02/1B/2010/215/' + \
+            'WV02_103001000621E500_X1BS_052807177090_01/' + \
+            'WV02_20100803220600_103001000621E500_10AUG03220600' + \
+            '-M1BS-052807177090_01_P002.ntf'
+
+        dgf = DgFile(fileName1, logger=logger)
+        self.assertEqual(dgf.getStripIndex(), 'P002')
+
+        fileName2 = '/css/nga/WV03/1B/2015/219/' + \
+            'WV03_104001000F2D9E00_X1BS_500495393030_01/' + \
+            'WV03_20150807213524_104001000F2D9E00_15AUG07213524' + \
+            '-M1BS-500495393030_01_P001.ntf'
+
+        dgf2 = DgFile(fileName2, logger=logger)
+        self.assertEqual(dgf2.getStripIndex(), 'P001')
+        self.assertNotEqual(dgf2.getStripIndex(), 'P002')
+
+    # -------------------------------------------------------------------------
+    # testIsMate
+    # -------------------------------------------------------------------------
+    def testIsMate(self):
+
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+        logger.addHandler(ch)
+
+        fileName1 = '/css/nga/WV02/1B/2018/278/' + \
+                    'WV02_10300100889D0300_X1BS_502602073050_01/' + \
+                    'WV02_20181005212446_10300100889D0300_18OCT05212446' + \
+                    '-P1BS-502602073050_01_P001.ntf'
+
+        fileName2 = '/css/nga/WV02/1B/2018/278/' + \
+                    'WV02_10300100869C3C00_X1BS_502599937060_01/' + \
+                    'WV02_20181005212317_10300100869C3C00_18OCT05212317' + \
+                    '-P1BS-502599937060_01_P001.ntf'
+
+        fileName3 = '/css/nga/WV02/1B/2018/278/' + \
+                    'WV02_10300100869C3C00_X1BS_502599937060_01/' + \
+                    'WV02_20181005212318_10300100869C3C00_18OCT05212318' + \
+                    '-P1BS-502599937060_01_P002.ntf'
+
+        dgf = DgFile(fileName1, logger=logger)
+        dgf2 = DgFile(fileName2, logger=logger)
+        dgf3 = DgFile(fileName3, logger=logger)
+
+        pairName = 'WV02_20181005_10300100889D0300_10300100869C3C00'
+
+        self.assertTrue(dgf.isMate(pairName, dgf2))
+        self.assertTrue(dgf2.isMate(pairName, dgf))
+        self.assertFalse(dgf.isMate(pairName, dgf))
+        self.assertFalse(dgf.isMate(pairName, dgf3))
+
+        with self.assertRaises(ValueError):
+            self.assertFalse(dgf.isMate('junk', dgf2))
