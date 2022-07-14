@@ -67,7 +67,7 @@ class FootprintsSceneTestCase(unittest.TestCase):
                                  'scene2.gml')
 
         scene2GML = minidom.parse(GML_FILE2)
-        features2 = sceneGML.getElementsByTagName('gml:featureMember')[0]
+        features2 = scene2GML.getElementsByTagName('gml:featureMember')[0]
         fps2 = FootprintsScene(sceneGML=features2)
 
         sceneList = [fps, fps2]

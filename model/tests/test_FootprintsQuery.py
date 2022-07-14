@@ -164,7 +164,10 @@ class FootprintsQueryTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testSceneList(self):
 
-        SCENE = '/css/nga/WV01/1B/2015/100/WV01_102001003A7E9A00_X1BS_502788423060_01/WV01_20150410052955_102001003A7E9A00_15APR10052955-P1BS-502788423060_01_P005.ntf'
+        SCENE = '/css/nga/WV01/1B/2015/100/' + \
+                'WV01_102001003A7E9A00_X1BS_502788423060_01/' + \
+                'WV01_20150410052955_102001003A7E9A00_' + \
+                '15APR10052955-P1BS-502788423060_01_P005.ntf'
 
         fpq = FootprintsQuery(FootprintsQueryTestCase._logger)
         fpq.setMaximumScenes(5)

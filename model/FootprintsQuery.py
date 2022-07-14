@@ -1,7 +1,6 @@
 
 from datetime import datetime
 import logging
-import os
 import psycopg2
 import tempfile
 from xml.dom import minidom
