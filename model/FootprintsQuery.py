@@ -261,17 +261,6 @@ class FootprintsQuery(object):
         # Establish a DB connection.
         # https://www.postgresql.org/docs/current/libpq-pgpass.html
         # ---
-        # connection = psycopg2.connect(user='rlgill',
-        #                               password='HWrkaBlFcHhlE7NAq20S',
-        #                               host='arcdb02.atss.adapt.nccs.nasa.gov',
-        #                               database='arcgis_temp_test')
-
-        # connection = psycopg2.connect(passfile='/adapt/nobackup/people/rlgill/ATT70991.pgpass',
-        #                               host='arcdb04.atss.adapt.nccs.nasa.gov',
-        #                               database='arcgis')
-
-        # connection = psycopg2.connect(passfile='/adapt/nobackup/people/rlgill/ATT70991.pgpass')
-
         connection = psycopg2.connect(user='nga_user',
                                       password='8iO00c43TMusKRZoJqXt',
                                       host='arcdb04.atss.adapt.nccs.nasa.gov',
