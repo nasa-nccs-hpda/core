@@ -14,17 +14,17 @@ class FootprintsScene(object):
         self._stripName = None
 
         if pgRecord:
-            
+
             self._fileName = pgRecord[0]
             self._pairName = pgRecord[1]
             self._stripName = pgRecord[2]
-            
+
         elif sceneGML:
-            
+
             self._fileName = self._getValue(sceneGML, 'ogr:s_filepath')
             self._pairName = self._getValue(sceneGML, 'ogr:pairname')
             self._stripName = self._getValue(sceneGML, 'ogr:strip_id')
-    
+
     # --------------------------------------------------------------------------
     # fileName
     # --------------------------------------------------------------------------

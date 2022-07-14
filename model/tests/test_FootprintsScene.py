@@ -77,15 +77,14 @@ class FootprintsSceneTestCase(unittest.TestCase):
     # testPgRecord
     # -------------------------------------------------------------------------
     def testPgRecord(self):
-        
+
         file1 = '/css/nga/WV01/1B/2022/121/' + \
                 'WV01_10200100C37ECB00_P1BS_506406585010_01/' + \
                 'WV01_20220501072725_10200100C37ECB00_22MAY01072725' + \
                 '-P1BS-506406585010_01_P007.ntf'
-                
+
         strip1 = 'WV01_10200100C37ECB00_P1BS_506406585010_01'
         fps1 = FootprintsScene(pgRecord=(file1, None, strip1))
         self.assertEqual(file1, fps1.fileName())
         self.assertEqual(None, fps1.pairName())
         self.assertEqual(strip1, fps1.stripName())
-        

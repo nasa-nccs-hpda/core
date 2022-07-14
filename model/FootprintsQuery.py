@@ -74,9 +74,9 @@ class FootprintsQuery(object):
     # addPairName
     # -------------------------------------------------------------------------
     def addPairNames(self, pairNames):
-        
+
         self.pairNames.extend(pairNames)
-        
+
     # -------------------------------------------------------------------------
     # addScenesFromNtf
     # -------------------------------------------------------------------------
@@ -130,19 +130,19 @@ class FootprintsQuery(object):
         # Add pair name list.
         # ---
         first = True
-        
+
         for pairName in self.pairNames:
-            
+
             if first:
-                
+
                 first = False
                 whereClause += ' AND ('
-                
+
             else:
                 whereClause += ' OR '
-                
+
             whereClause += 'pairname=' + "'" + pairName + "'"
-            
+
         if not first:
             whereClause += ')'
 
@@ -243,17 +243,15 @@ class FootprintsQuery(object):
     # getScenesFromResultsFile
     # -------------------------------------------------------------------------
     def getScenesFromResultsFile(self, resultsFile):
-        
+
         resultGML = minidom.parse(resultsFile)
         features = resultGML.getElementsByTagName('gml:featureMember')
         fpScenes = [FootprintsScene(f) for f in features]
-        
+
         return fpScenes
-        
+
     # -------------------------------------------------------------------------
     # getScenesFromPostgres
-    #
-    # /usr/local/bin/pip3 install psycopg2-binary
     # -------------------------------------------------------------------------
     def getScenesFromPostgres(self):
 
@@ -266,7 +264,7 @@ class FootprintsQuery(object):
                                       host='arcdb04.atss.adapt.nccs.nasa.gov',
                                       port='5432',
                                       database='arcgis')
-        
+
         cursor = connection.cursor()
 
         # Run the query.
@@ -289,7 +287,7 @@ class FootprintsQuery(object):
 
         # Store the results in FootprintScenes.
         fpScenes = [FootprintsScene(record) for record in cursor]
-        
+
         # Close connections.
         if(connection):
 
@@ -398,7 +396,7 @@ class FootprintsQuery(object):
         SystemCommand(cmd, logger=self.logger, raiseException=True)
 
         fpScenes = self.getScenesFromResultsFile(queryResult)
-        
+
         return fpScenes
 
     # -------------------------------------------------------------------------
@@ -445,19 +443,19 @@ class FootprintsQuery(object):
         # Add pair name list.
         # ---
         first = True
-        
+
         for pairName in self.pairNames:
-            
+
             if first:
-                
+
                 first = False
                 whereClause += ' AND ('
-                
+
             else:
                 whereClause += ' OR '
-                
+
             whereClause += 'pairname=' + "'" + pairName + "'"
-            
+
         if not first:
             whereClause += ')'
 
