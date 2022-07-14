@@ -201,7 +201,7 @@ class MerraRequestTestCase(unittest.TestCase):
 
         clipped = GeospatialImageFile(
             os.path.join(outDir, 'm2t1nxslv_avg_2010_month11_QV2M.nc'),
-            srs)
+            spatialReference=srs)
 
         self.assertTrue(clipped.envelope().Equal(env))
 
