@@ -74,7 +74,6 @@ class SystemCommand(object):
     # -------------------------------------------------------------------------
     def _detectError(self, msg: str) -> bool:
 
-        error = False
         msg = str(msg.lower())
 
         # Remove all exclusion strings from the message, ...
