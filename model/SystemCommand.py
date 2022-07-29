@@ -20,6 +20,13 @@ class SystemCommand(object):
                              'not recognised',
                              'traceback']
 
+    # ---
+    # Sometimes, the error strings above cause errors to be detected when there
+    # are not really any errors.  Add strings here that are found to cause this
+    # problem.
+    # ---
+    EXCLUSION_STRINGS = ['relative error']
+
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
@@ -47,37 +54,36 @@ class SystemCommand(object):
         # ---
         # There are cases where the shell command fails and still returns a 0,
         # causing returnCode to be None.  To detect this, check if msg contains
-        # and error text.
+        # any error text.  Sometimes there are false positives, where commands
+        # emit statements about errors even though they complete successfully.
+        # Filter those.
         # ---
-        lcMsg = str(self.msg.lower())
-        hasErrorString = False
+        if raiseException and \
+            (self.returnCode or
+             self._detectError(self.msg) or
+             self._detectError(self.stdOut)):
 
+            msg = 'A system command error occurred.  ' + \
+                  str(self.stdOut) + \
+                  str(self.msg)
+
+            raise RuntimeError(msg)
+
+    # -------------------------------------------------------------------------
+    # _detectError
+    # -------------------------------------------------------------------------
+    def _detectError(self, msg: str) -> bool:
+
+        error = False
+        msg = str(msg.lower())
+
+        # Remove all exclusion strings from the message, ...
+        for exclusion in SystemCommand.EXCLUSION_STRINGS:
+            msg = ''.join(msg.split(exclusion))
+
+        # ...then search for valid error strings.
         for eMsg in SystemCommand.ERROR_STRINGS_TO_TEST:
+            if eMsg in msg:
+                return True
 
-            if lcMsg.find(eMsg) != -1:
-
-                hasErrorString = True
-                break
-
-        # Other times, the error is reported in stdout.  Detect this.
-        if not hasErrorString:
-
-            lcMsg = str(self.stdOut.lower())
-            hasErrorString = False
-
-            for eMsg in SystemCommand.ERROR_STRINGS_TO_TEST:
-
-                if lcMsg.find(eMsg) != -1:
-
-                    hasErrorString = True
-                    break
-
-        if self.returnCode or hasErrorString:
-
-            if raiseException:
-
-                msg = 'A system command error occurred.  ' + \
-                      str(self.stdOut) + \
-                      str(self.msg)
-
-                raise RuntimeError(msg)
+        return False
