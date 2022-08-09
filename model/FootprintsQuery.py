@@ -231,6 +231,22 @@ class FootprintsQuery(object):
         return whereClause
 
     # -------------------------------------------------------------------------
+    # _getColumnNames
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _getColumnNames():
+
+        connection = psycopg2.connect(user='nga_user',
+                                      password='8iO00c43TMusKRZoJqXt',
+                                      host='arcdb04.atss.adapt.nccs.nasa.gov',
+                                      port='5432',
+                                      database='arcgis')
+
+        cursor = connection.cursor()
+        cursor.execute('select * from nga_footprint_master_v2')
+        print(cursor.description)
+
+    # -------------------------------------------------------------------------
     # getScenes
     # -------------------------------------------------------------------------
     def getScenes(self):
@@ -267,7 +283,7 @@ class FootprintsQuery(object):
         cursor = connection.cursor()
 
         # Run the query.
-        fields = ('s_filepath', 'stereopair', 'strip_id')
+        fields = ('s_filepath', 'pairname', 'strip_id')
 
         cmd = 'select ' + \
               ', '.join(fields) + \
