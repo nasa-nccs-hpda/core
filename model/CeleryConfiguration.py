@@ -9,6 +9,12 @@ import os
 # -----------------------------------------------------------------------------
 port = os.environ['REDIS_PORT']
 
+try:
+    default_queue = os.environ['CELERY_TASK_DEFAULT_QUEUE']
+except KeyError:
+    os.environ['CELERY_TASK_DEFAULT_QUEUE'] = str(os.getpid())
+    default_queue = os.environ['CELERY_TASK_DEFAULT_QUEUE']
+
 broker = 'redis://'
 host = 'localhost'
 broker = '{}{}:{}/0'.format(broker, host, port)
@@ -25,7 +31,7 @@ app = Celery('innovation-lab',
 
 app.conf.redis_port = port
 app.conf.worker_stdouts_level = 'INFO'
-app.conf.task_default_queue = '{}'.format(os.getpid())
+app.conf.task_default_queue = default_queue
 app.conf.accept_content = ['application/json',
                            'json',
                            'pickle',
