@@ -33,15 +33,15 @@ class DgFileTestCase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             filename = DgFile('/path/to/test.py')
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FileNotFoundError):
             filename = DgFile('/path/to/test.tif')
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FileNotFoundError):
             filename = DgFile('bad.tif')
 
         filename = DgFile(DgFileTestCase.file_works)
 
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(FileNotFoundError):
             filename = DgFile(DgFileTestCase.file_noxml)
 
     # -------------------------------------------------------------------------
@@ -195,3 +195,29 @@ class DgFileTestCase(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.assertFalse(dgf.isMate('junk', dgf2))
+
+    # -------------------------------------------------------------------------
+    # testEq
+    #
+    # Just to ensure the inheritance tree is finding the correct __eq__.
+    # -------------------------------------------------------------------------
+    def testEq(self):
+        
+        f1 = '/css/nga/WV02/1B/2015/293/' + \
+             'WV02_103001004B456B00_M1BS_506393465060_01/' + \
+             'WV02_20151020215510_103001004B456B00_' + \
+             '15OCT20215510-M1BS-506393465060_01_P001.ntf'
+            
+        f2 = '/css/nga/WV02/1B/2015/293/' + \
+             'WV02_103001004B456B00_M1BS_506393465060_01/' + \
+             'WV02_20151020215510_103001004B456B00_' + \
+             '15OCT20215510-M1BS-506393465060_01_P001.ntf'
+            
+        self.assertEqual(f1, f2)
+            
+        f3 = '/css/nga/WV02/1B/2015/138/' + \
+             'WV02_10300100425E0F00_X1BS_500408334100_01/' + \
+             'WV02_20150518220912_10300100425E0F00_' + \
+             '15MAY18220912-M1BS-500408334100_01_P001.ntf'
+            
+        self.assertNotEqual(f1, f3)  # s/b assertUnequal

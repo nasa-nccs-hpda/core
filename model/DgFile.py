@@ -38,8 +38,8 @@ class DgFile(GeospatialImageFile):
         # Ensure the XML file exists.
         xmlFileName = fileName.replace(self.extension, '.xml')
 
-        if not os.path.isfile(xmlFileName):
-            raise RuntimeError('{} does not exist'.format(xmlFileName))
+        if not os.path.exists(xmlFileName):
+            raise FileNotFoundError('{} does not exist'.format(xmlFileName))
 
         self.xmlFileName = xmlFileName
 
@@ -240,8 +240,9 @@ class DgFile(GeospatialImageFile):
 
         gdalBandIndex = int(self.bandNameList.index(bandName)) + 1
 
-        baseName = os.path.basename(self.fileName().replace(self.extension,
-                                                            '_b{}.tif'.format(gdalBandIndex)))
+        baseName = \
+            os.path.basename(self.fileName().replace(self.extension, \
+                '_b{}.tif'.format(gdalBandIndex)))
 
         tempBandFile = os.path.join(outputDir, baseName)
 
