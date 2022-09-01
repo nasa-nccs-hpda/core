@@ -42,7 +42,7 @@ class BaseFile(object):
     # file paths.
     # -------------------------------------------------------------------------
     def __eq__(self, other) -> bool:
-        
+
         return isinstance(other, BaseFile) and \
                self._filePath == other._filePath
 
@@ -50,12 +50,12 @@ class BaseFile(object):
     # __lt__
     # -------------------------------------------------------------------------
     def __lt__(self, other) -> bool:
-        
+
         return self._filePath < other._filePath
-        
+
     # -------------------------------------------------------------------------
     # __hash__
     # -------------------------------------------------------------------------
     def __hash__(self) -> int:
-        
+
         return hash(self._filePath)

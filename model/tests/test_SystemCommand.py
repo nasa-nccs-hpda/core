@@ -36,7 +36,7 @@ class SystemCommandTestCase(unittest.TestCase):
         # is easier to read, considering all the quoting involved.
         # ---
         self.assertEqual(scmd.msg,
-                b"ls: cannot access 'abc.txt': 'No such file or directory\n")
+            b"ls: cannot access 'abc.txt': No such file or directory\n")
 
         scmd = SystemCommand('gdalinfo abc.txt', logging.getLogger())
         self.assertTrue(b'ERROR 4: abc.txt: No such file or' in scmd.msg)

@@ -20,7 +20,7 @@ from core.model.GeospatialImageFile import GeospatialImageFile
 # -----------------------------------------------------------------------------
 class MerraRequest(object):
 
-    BASE_DIR = '/adapt/nobackup/projects/ilab/data/MERRA2/'
+    BASE_DIR = '/explore/nobackup/projects/ilab/data/MERRA2/'
     OPERATIONS = ['avg', 'max', 'min', 'sum']
     MONTHLY = 'monthly'
     WEEKLY = 'weekly'

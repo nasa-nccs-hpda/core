@@ -241,8 +241,9 @@ class DgFile(GeospatialImageFile):
         gdalBandIndex = int(self.bandNameList.index(bandName)) + 1
 
         baseName = \
-            os.path.basename(self.fileName().replace(self.extension, \
-                '_b{}.tif'.format(gdalBandIndex)))
+            os.path.basename(self.fileName().
+                             replace(self.extension,
+                                     '_b{}.tif'.format(gdalBandIndex)))
 
         tempBandFile = os.path.join(outputDir, baseName)
 

@@ -19,7 +19,7 @@ from core.model.MerraRequest import MerraRequest
 # class MerraRequestTestCase
 #
 # python -m unittest discover model/tests/
-# python -m unittest model.tests.test_MerraRequest
+# python -m unittest core.model.tests.test_MerraRequest
 # -----------------------------------------------------------------------------
 class MerraRequestTestCase(unittest.TestCase):
 
@@ -35,7 +35,7 @@ class MerraRequestTestCase(unittest.TestCase):
                 ['m2t1nxflx', 'm2t1nxslv'],
                 MerraRequest.OPERATIONS)
 
-        baseDir = '/adapt/nobackup/projects/ilab/data/MERRA2/Monthly'
+        baseDir = '/explore/nobackup/projects/ilab/data/MERRA2/Monthly'
 
         expectedExisting = [
             os.path.join(baseDir, 'm2t1nxflx_avg_2010_month10.nc'),
