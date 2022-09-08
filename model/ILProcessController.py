@@ -73,14 +73,13 @@ class ILProcessController():
 
             # Retrieve log level - default to 'info'
             _logLevel = app.conf.worker_stdouts_level
-            _logLevel = 'INFO' if _logLevel is None \
+            _logLevel = 'DEBUG' if _logLevel is None \
                 else _logLevel
 
             # Start the Celery Workers
             _worker = "/usr/local/bin/celery -A " + \
                 ILProcessController.celeryConfig + " worker " + \
                 _concurrency + \
-                " -Q {}".format(os.getpid()) + \
                 " --loglevel={}".format(_logLevel) + \
                 " &"
 
@@ -102,11 +101,8 @@ class ILProcessController():
 
         try:
             print('In ILProcessController.__exit__() {}'.format(os.getpid()))
-
-            processToKill = '\"{} worker -Q {}\"'.format(
-                ILProcessController.celeryConfig,
-                os.getpid())
-
+            processToKill = '\"{} worker\"'.format(
+                ILProcessController.celeryConfig)
             # Shutdown the Celery workers
             shutdownWorkers = "/usr/bin/pkill -9 -f {}".format(processToKill)
             SystemCommand(shutdownWorkers, None, True)
