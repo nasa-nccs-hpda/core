@@ -38,8 +38,8 @@ class DgFile(GeospatialImageFile):
         # Ensure the XML file exists.
         xmlFileName = fileName.replace(self.extension, '.xml')
 
-        if not os.path.isfile(xmlFileName):
-            raise RuntimeError('{} does not exist'.format(xmlFileName))
+        if not os.path.exists(xmlFileName):
+            raise FileNotFoundError('{} does not exist'.format(xmlFileName))
 
         self.xmlFileName = xmlFileName
 
@@ -49,7 +49,9 @@ class DgFile(GeospatialImageFile):
         # below.
         # ---
         try:
-            super(DgFile, self).__init__(fileName, None, logger)
+            super(DgFile, self).__init__(fileName,
+                                         spatialReference=None,
+                                         logger=logger)
 
         except RuntimeError as e:
 
@@ -130,7 +132,7 @@ class DgFile(GeospatialImageFile):
         # bandNameList
         try:
             self.bandNameList = \
-                 [n.tag for n in self.imdTag if n.tag.startswith('BAND_')]
+                [n.tag for n in self.imdTag if n.tag.startswith('BAND_')]
 
         except Exception as e:
 
@@ -238,8 +240,10 @@ class DgFile(GeospatialImageFile):
 
         gdalBandIndex = int(self.bandNameList.index(bandName)) + 1
 
-        baseName = os.path.basename(self.fileName().replace(self.extension,
-                                    '_b{}.tif'.format(gdalBandIndex)))
+        baseName = \
+            os.path.basename(self.fileName().
+                             replace(self.extension,
+                                     '_b{}.tif'.format(gdalBandIndex)))
 
         tempBandFile = os.path.join(outputDir, baseName)
 
@@ -336,6 +340,48 @@ class DgFile(GeospatialImageFile):
                 self.logger.warn(e)
 
             return None
+
+    # -------------------------------------------------------------------------
+    # getStripIndex
+    # -------------------------------------------------------------------------
+    def getStripIndex(self):
+
+        return os.path.splitext(self.fileName())[0].split('_')[-1]
+
+    # -------------------------------------------------------------------------
+    # isMate
+    #
+    # A pair name is *only available from Footprints*, and it looks like
+    # WV02_20181005_10300100889D0300_10300100869C3C00, where the pair consists
+    # of mates identified by the catalog IDs 10300100889D0300 and
+    # 10300100869C3C00.  Furthermore, these catalog IDs represent strips, so
+    # there can be multiple scenes for each ID.  To determine the mate, *match
+    # the last part of the file name* from the file naming convention.  This is
+    # what happens when non-computer scientists design systems.
+    # -------------------------------------------------------------------------
+    def isMate(self, pairName, otherDgf):
+
+        pairCats = pairName.split('_')[2:]
+        thisCat = self.getCatalogId()
+
+        if thisCat not in pairCats:
+
+            raise ValueError('Pair name, ' +
+                             str(pairName) +
+                             ' is unassociated with this file.')
+
+        otherCat = otherDgf.getCatalogId()
+
+        if otherCat not in pairCats:
+            return False
+
+        if otherCat == thisCat:
+            return False
+
+        if self.getStripIndex() != otherDgf.getStripIndex():
+            return False
+
+        return True
 
     # -------------------------------------------------------------------------
     # isMultispectral()
@@ -463,12 +509,12 @@ class DgFile(GeospatialImageFile):
     def srs(self):
 
         srs = self._dataset.GetSpatialRef()
-        
+
         if not srs:
             srs = SpatialReference()
             srs.ImportFromEPSG(4326)
             srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-            
+
         return srs
 
     # -------------------------------------------------------------------------
@@ -545,5 +591,5 @@ class DgFile(GeospatialImageFile):
     # -------------------------------------------------------------------------
     def __setstate__(self, state):
 
-        self.__init__(state[GeospatialImageFile.FILE_KEY], 
+        self.__init__(state[GeospatialImageFile.FILE_KEY],
                       state[GeospatialImageFile.LOGGER_KEY])

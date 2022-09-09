@@ -7,25 +7,36 @@ class FootprintsScene(object):
     # --------------------------------------------------------------------------
     # __init__
     # --------------------------------------------------------------------------
-    def __init__(self, sceneGML):
+    def __init__(self, pgRecord=None, sceneGML=None) -> None:
 
-        self.gml = sceneGML
+        self._fileName = None
+        self._pairName = None
+        self._stripName = None
+
+        if pgRecord:
+
+            self._fileName = pgRecord[0]
+            self._pairName = pgRecord[1]
+            self._stripName = pgRecord[2]
+
+        elif sceneGML:
+
+            self._fileName = self._getValue(sceneGML, 'ogr:s_filepath')
+            self._pairName = self._getValue(sceneGML, 'ogr:pairname')
+            self._stripName = self._getValue(sceneGML, 'ogr:strip_id')
 
     # --------------------------------------------------------------------------
     # fileName
     # --------------------------------------------------------------------------
     def fileName(self):
-        return self._getValue('ogr:s_filepath')
+        return self._fileName
 
     # --------------------------------------------------------------------------
     # getValue
     # --------------------------------------------------------------------------
-    def _getValue(self, tagName):
+    def _getValue(self, gml, tagName):
 
-        # return self.gml.getElementsByTagName(tagName)[0].childNodes[0]. \
-        #        nodeValue
-
-        tag = self.gml.getElementsByTagName(tagName)
+        tag = gml.getElementsByTagName(tagName)
 
         if tag.length == 0:
 
@@ -38,16 +49,23 @@ class FootprintsScene(object):
         return childNodes[0].nodeValue if childNodes.length > 0 else None
 
     # --------------------------------------------------------------------------
+    # __lt__
+    # --------------------------------------------------------------------------
+    def __lt__(self, other):
+
+        return self.fileName() < other.fileName()
+
+    # --------------------------------------------------------------------------
     # pairName
     # --------------------------------------------------------------------------
-    def pairName(self):
-        return self._getValue('ogr:pairname')
+    def pairName(self) -> str:
+        return self._pairName
 
     # --------------------------------------------------------------------------
     # stripName
     # --------------------------------------------------------------------------
-    def stripName(self):
-        return self._getValue('ogr:strip_id')
+    def stripName(self) -> str:
+        return self._stripName
 
     # --------------------------------------------------------------------------
     # __repr__
@@ -59,4 +77,4 @@ class FootprintsScene(object):
     # __str__
     # --------------------------------------------------------------------------
     def __str__(self):
-        return self.fileName()
+        return self._fileName

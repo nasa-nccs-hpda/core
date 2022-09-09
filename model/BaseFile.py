@@ -33,3 +33,29 @@ class BaseFile(object):
     # -------------------------------------------------------------------------
     def __str__(self):
         return self.fileName()
+
+    # -------------------------------------------------------------------------
+    # __eq__
+    #
+    # Without this implementation, '==' returns true when two variables point
+    # to the same instance of BaseFile in memory.  This implementation compares
+    # file paths.
+    # -------------------------------------------------------------------------
+    def __eq__(self, other) -> bool:
+
+        return isinstance(other, BaseFile) and \
+               self._filePath == other._filePath
+
+    # -------------------------------------------------------------------------
+    # __lt__
+    # -------------------------------------------------------------------------
+    def __lt__(self, other) -> bool:
+
+        return self._filePath < other._filePath
+
+    # -------------------------------------------------------------------------
+    # __hash__
+    # -------------------------------------------------------------------------
+    def __hash__(self) -> int:
+
+        return hash(self._filePath)

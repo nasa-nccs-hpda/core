@@ -24,7 +24,8 @@ from core.model.GeospatialImageFile import GeospatialImageFile
 #
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_GeospatialImageFile
-# python -m unittest core.model.tests.test_GeospatialImageFile.GeospatialImageFileTestCase.testInit
+# python -m unittest \
+#   core.model.tests.test_GeospatialImageFile.GeospatialImageFileTestCase.testInit
 # -----------------------------------------------------------------------------
 class GeospatialImageFileTestCase(unittest.TestCase):
 
@@ -71,7 +72,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
             srs.ImportFromEPSG(4326)
             srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-        return GeospatialImageFile(workingCopy, srs, logger)
+        return GeospatialImageFile(workingCopy, spatialReference=srs,
+                                   logger=logger)
 
     # -------------------------------------------------------------------------
     # testClipReproject
@@ -99,11 +101,11 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile.clipReproject(env)
 
         # Check the result.
-        xform = imageFile._getDataset().GetGeoTransform()
+        xform = imageFile.getDataset().GetGeoTransform()
         xScale = xform[1]
         yScale = xform[5]
-        width = imageFile._getDataset().RasterXSize
-        height = imageFile._getDataset().RasterYSize
+        width = imageFile.getDataset().RasterXSize
+        height = imageFile.getDataset().RasterYSize
         clippedUlx = xform[0]
         clippedUly = xform[3]
         clippedLrx = clippedUlx + width * xScale
@@ -172,11 +174,11 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile.clipReproject(env, targetSRS)
 
         # Check the results.
-        xform = imageFile._getDataset().GetGeoTransform()
+        xform = imageFile.getDataset().GetGeoTransform()
         xScale = xform[1]
         yScale = xform[5]
-        width = imageFile._getDataset().RasterXSize
-        height = imageFile._getDataset().RasterYSize
+        width = imageFile.getDataset().RasterXSize
+        height = imageFile.getDataset().RasterYSize
         clippedUlx = xform[0]
         clippedUly = xform[3]
         clippedLrx = clippedUlx + width * xScale
@@ -281,17 +283,17 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         shutil.copyfile(testFile, workingCopy)
         srs = SpatialReference()
         srs.ImportFromEPSG(32612)
-        imageFile2 = GeospatialImageFile(workingCopy, srs)
+        imageFile2 = GeospatialImageFile(workingCopy, spatialReference=srs)
 
         self.assertNotEqual(imageFile.fileName(), imageFile2.fileName())
         self.assertEqual(type(imageFile.logger), logging.RootLogger)
-        
+
         self.assertNotEqual(imageFile.srs().ExportToProj4(),
                             imageFile2.srs().ExportToProj4())
-        
+
         imageFileDump = imageFile.__getstate__()
         imageFile2.__setstate__(imageFileDump)
-        
+
         self.assertEqual(imageFile.fileName(), imageFile2.fileName())
         self.assertEqual(type(imageFile2.logger), logging.RootLogger)
 
@@ -438,7 +440,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # Test passing an SRS.
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
-        imageFile = GeospatialImageFile(testFile2, srs)
+        imageFile = GeospatialImageFile(testFile2, spatialReference=srs)
 
         expectedSRS = SpatialReference()
         expectedSRS.ImportFromEPSG(4326)
@@ -449,7 +451,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         srs = SpatialReference()
 
         with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
-            imageFile = GeospatialImageFile(testFile2, srs)
+            imageFile = GeospatialImageFile(testFile2, spatialReference=srs)
 
         os.remove(workingCopy1)
         os.remove(workingCopy2)

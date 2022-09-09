@@ -20,7 +20,7 @@ from core.model.GeospatialImageFile import GeospatialImageFile
 # -----------------------------------------------------------------------------
 class MerraRequest(object):
 
-    BASE_DIR = '/adapt/nobackup/projects/ilab/data/MERRA2/'
+    BASE_DIR = '/explore/nobackup/projects/ilab/data/MERRA2/'
     OPERATIONS = ['avg', 'max', 'min', 'sum']
     MONTHLY = 'monthly'
     WEEKLY = 'weekly'
@@ -88,8 +88,8 @@ class MerraRequest(object):
 
         for f in files:
 
-            geoFile = GeospatialImageFile(f, srs)
-            subs = geoFile._getDataset().GetSubDatasets()
+            geoFile = GeospatialImageFile(f, spatialReference=srs)
+            subs = geoFile.getDataset().GetSubDatasets()
             foundVariables = []
 
             # Look for a variable name in the subdataset name.
