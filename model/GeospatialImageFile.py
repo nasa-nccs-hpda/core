@@ -26,12 +26,13 @@ class GeospatialImageFile(ImageFile):
     # __init__
     # -------------------------------------------------------------------------
     def __init__(self, pathToFile, spatialReference=None,
-                 subdataset=None, logger=None):
+                 subdataset=None, logger=None, outputFormat='netCDF'):
 
         # Initialize the base class.
         super(GeospatialImageFile, self).__init__(pathToFile, subdataset)
 
         self.logger = logger
+        self._outputFormat = outputFormat
 
         # The passed SRS overrides any internal SRS.
         if spatialReference and spatialReference.Validate() == 0:
@@ -69,7 +70,7 @@ class GeospatialImageFile(ImageFile):
             raise RuntimeError('Spatial reference for ' +
                                pathToFile,
                                ' is invalid.')
-
+                               
     # -------------------------------------------------------------------------
     # clipReproject
     #
@@ -174,7 +175,7 @@ class GeospatialImageFile(ImageFile):
 
         return 'gdalwarp ' + \
                ' -multi' + \
-               ' -of netCDF' + \
+               ' -of ' + str(self._outputFormat) + \
                ' -s_srs "' + \
                self._dataset.GetSpatialRef().ExportToProj4() + \
                '"'
