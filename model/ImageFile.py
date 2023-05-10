@@ -31,6 +31,7 @@ class ImageFile(BaseFile):
 
         try:
             ro = gdalconst.GA_ReadOnly if readOnly else gdalconst.GF_Write
+            
             self._dataset = gdal.Open(subdataset, ro) \
                 if subdataset else gdal.Open(pathToFile, ro)
 

@@ -24,15 +24,14 @@ from core.model.GeospatialImageFile import GeospatialImageFile
 #
 # python -m unittest discover model/tests/
 # python -m unittest core.model.tests.test_GeospatialImageFile
-# python -m unittest \
-#   core.model.tests.test_GeospatialImageFile.GeospatialImageFileTestCase.testInit
+# python -m unittest core.model.tests.test_GeospatialImageFile.GeospatialImageFileTestCase.testInit
 # -----------------------------------------------------------------------------
 class GeospatialImageFileTestCase(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     # createTestFile
     # -------------------------------------------------------------------------
-    def _createTestFile(self, createUTM=False):
+    def _createTestFile(self, createUTM=True):
 
         # ---
         # Set up a logger because serialization was causing loggers to point
@@ -45,7 +44,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         logger.addHandler(ch)
 
         testFile = None
-
+        srs = None
+        
         if createUTM:
 
             testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -53,9 +53,6 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
             workingCopy = tempfile.mkstemp(suffix='.tif')[1]
             shutil.copyfile(testFile, workingCopy)
-
-            srs = SpatialReference()
-            srs.ImportFromEPSG(32612)
 
         else:
             testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -72,7 +69,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
             srs.ImportFromEPSG(4326)
             srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-        return GeospatialImageFile(workingCopy, spatialReference=srs,
+        return GeospatialImageFile(workingCopy, 
+                                   spatialReference=srs,
                                    logger=logger)
 
     # -------------------------------------------------------------------------
@@ -85,15 +83,13 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # ---
         imageFile = self._createTestFile()
 
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
         srs = SpatialReference()
-        srs.ImportFromEPSG(4326)
-        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        srs.ImportFromEPSG(32612)
 
-        ulx = -120
-        uly = 48
-        lrx = -119
-        lry = 47
+        ulx = 367072
+        uly = 4209233
+        lrx = 509260
+        lry = 4095089
         env = Envelope()
         env.addPoint(ulx, uly, 0, srs)
         env.addPoint(lrx, lry, 0, srs)
@@ -131,19 +127,19 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         self.assertTrue(imageFile.srs().IsSame(targetSRS))
 
         self.assertAlmostEqual(imageFile.envelope().ulx(),
-                               -112.5144042,
+                               -112.51440415860442,
                                places=7)
 
         self.assertAlmostEqual(imageFile.envelope().uly(),
-                               38.0308143,
+                               38.030814279376,
                                places=7)
 
         self.assertAlmostEqual(imageFile.envelope().lrx(),
-                               -110.8938763,
+                               -110.89387634343088,
                                places=7)
 
         self.assertAlmostEqual(imageFile.envelope().lry(),
-                               36.9934700,
+                               36.99347004100058,
                                places=7)
 
         os.remove(imageFile.fileName())
@@ -202,12 +198,12 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile = self._createTestFile()
 
         # Build the envelope and clip.
-        ulx = -100
-        uly = 40
-        lrx = -70
-        lry = 30
+        ulx = 367072
+        uly = 4209233
+        lrx = 509260
+        lry = 4095089
         srs = SpatialReference()
-        srs.ImportFromEPSG(4326)
+        srs.ImportFromEPSG(32612)
         env = Envelope()
         env.addPoint(ulx, uly, 0, srs)
         env.addPoint(lrx, lry, 0, srs)
@@ -247,13 +243,11 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # Test envelope.
         srs = SpatialReference()
-        srs.ImportFromEPSG(4326)
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        srs.ImportFromEPSG(32612)
 
         expectedEnvelope = Envelope()
-        expectedEnvelope.addPoint(-125.3125000,  50.25, 0, srs)
-        expectedEnvelope.addPoint(-65.9375000,  23.75, 0, srs)
+        expectedEnvelope.addPoint(367073.627681211, 4209234.221027355, 0, srs)
+        expectedEnvelope.addPoint(509261.627681211, 4095090.2210273547, 0, srs)
 
         self.assertTrue(imageFile.envelope().Equals(expectedEnvelope))
 
@@ -266,7 +260,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
     def testGetSquareScale(self):
 
         imageFile = self._createTestFile()
-        self.assertEqual(imageFile.getSquareScale(), 0.625)
+        self.assertEqual(imageFile.getSquareScale(), 246.0)
         os.remove(imageFile.fileName())
 
     # -------------------------------------------------------------------------
@@ -274,26 +268,35 @@ class GeospatialImageFileTestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def testGetSetState(self):
 
-        imageFile = self._createTestFile()
+        # Create an image file.
+        imageFile = self._createTestFile(createUTM=True)
 
         testFile = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                'TSURF.nc')
+                                'gsenm_250m_eucl_dist_streams.tif')
 
-        workingCopy = tempfile.mkstemp(suffix='.nc')[1]
+        # Copy the image file and change its SRS.
+        workingCopy = tempfile.mkstemp(suffix='.tif')[1]
         shutil.copyfile(testFile, workingCopy)
         srs = SpatialReference()
-        srs.ImportFromEPSG(32612)
+        srs.ImportFromEPSG(4326)
         imageFile2 = GeospatialImageFile(workingCopy, spatialReference=srs)
 
+        # Confirm that these are different.
         self.assertNotEqual(imageFile.fileName(), imageFile2.fileName())
         self.assertEqual(type(imageFile.logger), logging.RootLogger)
 
         self.assertNotEqual(imageFile.srs().ExportToProj4(),
                             imageFile2.srs().ExportToProj4())
 
+        # ---
+        # Dump the first image and instantiate the second.
+        # ERROR 1: netCDFDataset::_SetProjection() should only be called once
+        # in update mode!
+        # ---
         imageFileDump = imageFile.__getstate__()
         imageFile2.__setstate__(imageFileDump)
 
+        # Confirm the second was overwritten.
         self.assertEqual(imageFile.fileName(), imageFile2.fileName())
         self.assertEqual(type(imageFile2.logger), logging.RootLogger)
 
@@ -306,7 +309,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         #                  imageFile2.GetSpatialRef().ExportToProj4())
 
         self.assertEqual(imageFile2.srs().ExportToProj4(),
-                         '+proj=longlat +datum=WGS84 +no_defs')
+                         '+proj=utm +zone=12 +datum=WGS84 +units=m +no_defs')
 
         os.remove(imageFile.fileName())
         os.remove(workingCopy)
@@ -320,7 +323,9 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile = self._createTestFile()
 
         # Test with no operation specified.
-        with self.assertRaisesRegex(RuntimeError, 'envelope or output SRS'):
+        with self.assertRaisesRegex(RuntimeError, 
+                                    'envelope, output SRS or scale'):
+
             imageFile.clipReproject()
 
         # Delete the test file.
@@ -360,8 +365,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile = self._createTestFile()
 
         # Scale.  Original scale is (246, -246).
-        targetX_Scale = 0.25
-        targetY_Scale = -0.35
+        targetX_Scale = 200
+        targetY_Scale = -200
 
         imageFile.resample(targetX_Scale, targetY_Scale)
 
@@ -387,8 +392,8 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         imageFile = self._createTestFile()
 
         # Check the scale.
-        self.assertEqual(imageFile.scale()[0], 0.625)
-        self.assertEqual(imageFile.scale()[1], -0.5)
+        self.assertEqual(imageFile.scale()[0], 246.0)
+        self.assertEqual(imageFile.scale()[1], -246.0)
 
         # Delete the test file.
         os.remove(imageFile.fileName())
@@ -403,11 +408,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
 
         # Check the srs.
         expectedSRS = SpatialReference()
-        expectedSRS.ImportFromEPSG(4326)
-
-        # https://github.com/OSGeo/gdal/blob/release/3.0/gdal/MIGRATION_GUIDE.TXT
-        expectedSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
+        expectedSRS.ImportFromEPSG(32612)
         self.assertTrue(imageFile.srs().IsSame(expectedSRS))
 
         # Delete the test file.
@@ -440,7 +441,7 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         # Test passing an SRS.
         srs = SpatialReference()
         srs.ImportFromEPSG(4326)
-        imageFile = GeospatialImageFile(testFile2, spatialReference=srs)
+        imageFile = GeospatialImageFile(workingCopy1, spatialReference=srs)
 
         expectedSRS = SpatialReference()
         expectedSRS.ImportFromEPSG(4326)
@@ -451,7 +452,18 @@ class GeospatialImageFileTestCase(unittest.TestCase):
         srs = SpatialReference()
 
         with self.assertRaisesRegex(RuntimeError, 'Spatial reference for '):
-            imageFile = GeospatialImageFile(testFile2, spatialReference=srs)
+            imageFile = GeospatialImageFile(workingCopy2, spatialReference=srs)
 
         os.remove(workingCopy1)
         os.remove(workingCopy2)
+
+    # -------------------------------------------------------------------------
+    # testReadOnlySetSpatialRefWithGeotiff
+    # -------------------------------------------------------------------------
+    def testReadOnlySetSpatialRefWithGeotiff(self):
+        
+        imageFile = self._createTestFile(createUTM=True)
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+        imageFile.getDataset().SetSpatialRef(srs)
+        

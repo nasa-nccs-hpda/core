@@ -68,6 +68,19 @@ class Envelope(ogr.Geometry):
         self.AddGeometry(ogrPoint)
 
     # -------------------------------------------------------------------------
+    # Clone
+    #
+    # Overriding Geometry.Clone() because it returned Geometry, instead of
+    # Envelope. 
+    # -------------------------------------------------------------------------
+    def Clone(self):
+        
+        clone = Envelope()
+        clone.addPoint(self.ulx(), self.uly(), 0, self.GetSpatialReference())
+        clone.addPoint(self.lrx(), self.lry(), 0, self.GetSpatialReference())
+        return clone
+        
+    # -------------------------------------------------------------------------
     # Equals
     #
     # NOTE:  Overriding Geometry's Equals method to specialize its behavior

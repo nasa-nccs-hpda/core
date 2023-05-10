@@ -230,3 +230,27 @@ class EnvelopeTestCase(unittest.TestCase):
         self.assertEqual(uly, env.uly())
         self.assertEqual(lrx, env.lrx())
         self.assertEqual(lry, env.lry())
+
+    # -------------------------------------------------------------------------
+    # testClone
+    #
+    # Discovered that Envelope.Clone() yields a Geometry, not another Envelope,
+    # when using Geometry's implementation.
+    # -------------------------------------------------------------------------
+    def testClone(self):
+
+        ulx = -148
+        uly = 65
+        lrx = -147
+        lry = 64
+        
+        srs = SpatialReference()
+        srs.ImportFromEPSG(4326)
+
+        env = Envelope()
+        env.addPoint(ulx, uly, 0, srs)
+        env.addPoint(lrx, lry, 0, srs)
+
+        clone = env.Clone()
+        self.assertIsInstance(clone, Envelope)
+

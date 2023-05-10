@@ -4,7 +4,9 @@
 import math
 import shutil
 import tempfile
+import warnings
 
+from osgeo import gdal
 from osgeo.osr import SpatialReference
 
 from core.model.Envelope import Envelope
@@ -14,6 +16,10 @@ from core.model.SystemCommand import SystemCommand
 
 # -----------------------------------------------------------------------------
 # class GeospatialImageFile
+#
+# The error
+# "ERROR 1: netcdf error #-42 : NetCDF: String match to name in use" is 
+# described here https://github.com/Unidata/netcdf4-python/issues/1020.
 # -----------------------------------------------------------------------------
 class GeospatialImageFile(ImageFile):
 
@@ -25,13 +31,18 @@ class GeospatialImageFile(ImageFile):
     # -------------------------------------------------------------------------
     # __init__
     # -------------------------------------------------------------------------
-    def __init__(self, pathToFile, spatialReference=None,
-                 subdataset=None, logger=None):
+    def __init__(self, 
+                 pathToFile, 
+                 spatialReference=None,
+                 subdataset=None, 
+                 logger=None, 
+                 outputFormat='GTiff'):
 
         # Initialize the base class.
         super(GeospatialImageFile, self).__init__(pathToFile, subdataset)
 
         self.logger = logger
+        self._outputFormat = outputFormat
 
         # The passed SRS overrides any internal SRS.
         if spatialReference and spatialReference.Validate() == 0:
@@ -69,27 +80,30 @@ class GeospatialImageFile(ImageFile):
             raise RuntimeError('Spatial reference for ' +
                                pathToFile,
                                ' is invalid.')
-
+                               
     # -------------------------------------------------------------------------
     # clipReproject
-    #
-    # These  operations, clipping and reprojection can be combined into a
-    # single GDAL call.  This must be more efficient than invoking them
-    # individually.
     # -------------------------------------------------------------------------
-    def clipReproject(self, envelope=None, outputSRS=None, dataset=None):
-
-        dataset = dataset or self._filePath
+    def clipReproject(self, 
+                      envelope=None, 
+                      outputSRS=None, 
+                      dataset=None,
+                      xScale=None,
+                      yScale=None):
 
         # At least one operation must be configured.
-        if not envelope and not outputSRS:
+        if not envelope and not outputSRS and not xScale and not yScale:
 
-            raise RuntimeError('Clip envelope or output SRS must be ' +
+            raise RuntimeError('Clip envelope, output SRS or scale must be ' +
                                'specified.')
 
-        cmd = self._getBaseCmd()
-
+        # ---
         # Clip?
+        # ---
+        obValue = None
+        obSRS = None
+        destSRS = None
+        
         if envelope:
 
             if not isinstance(envelope, Envelope):
@@ -100,26 +114,37 @@ class GeospatialImageFile(ImageFile):
                 raise RuntimeError('The clip envelope does not intersect ' +
                                    'the image.')
 
-            cmd += (' -te' +
-                    ' ' + str(envelope.ulx()) +
-                    ' ' + str(envelope.lry()) +
-                    ' ' + str(envelope.lrx()) +
-                    ' ' + str(envelope.uly()) +
-                    ' -te_srs' +
-                    ' "' + envelope.GetSpatialReference().ExportToProj4() +
-                    '"')
-
+            obValue = (envelope.ulx(), envelope.lry(), 
+                       envelope.lrx(), envelope.uly())
+                       
+            obSRS = envelope.GetSpatialReference().ExportToProj4()
+            
+        # ---
         # Reproject?
+        # ---
         if outputSRS and not self._dataset.GetSpatialRef().IsSame(outputSRS):
+            destSRS = outputSRS.ExportToProj4()
+            
+        # ---
+        # Build the warp options.
+        # ---
+        options = gdal.WarpOptions(\
+            multithread=True,
+            format=self._outputFormat,
+            srcSRS=self._dataset.GetSpatialRef().ExportToProj4(),
+            outputBounds=obValue,
+            outputBoundsSRS=obSRS,
+            dstSRS=destSRS,
+            xRes=xScale,
+            yRes=yScale
+        )
 
-            cmd += ' -t_srs "' + outputSRS.ExportToProj4() + '"'
-            self._srs = outputSRS
-
-        # Finish the command.
+        # ---
+        # Warp
+        # ---
         outFile = tempfile.mkstemp()[1]
-        cmd += ' ' + dataset + ' ' + outFile
-        SystemCommand(cmd, self.logger, True)
-
+        dataset = dataset or self._filePath
+        gdal.Warp(outFile, dataset, options=options)
         shutil.move(outFile, self._filePath)
 
         # ---
@@ -127,8 +152,70 @@ class GeospatialImageFile(ImageFile):
         # reprojected file; however, if it is EPSG:4326, the axis order could
         # be incorrect.  Passing the requested SRS keeps the axis order
         # consistent.
+        #
+        # Is this still relevant?
         # ---
-        self.__init__(self._filePath, spatialReference=outputSRS)
+        self.__init__(self._filePath)  #, spatialReference=outputSRS)
+
+    # -------------------------------------------------------------------------
+    # clipReprojectOrig
+    #
+    # These  operations, clipping and reprojection can be combined into a
+    # single GDAL call.  This must be more efficient than invoking them
+    # individually.
+    # -------------------------------------------------------------------------
+    # def clipReprojectOrig(self, envelope=None, outputSRS=None, dataset=None):
+    #
+    #     dataset = dataset or self._filePath
+    #
+    #     # At least one operation must be configured.
+    #     if not envelope and not outputSRS:
+    #
+    #         raise RuntimeError('Clip envelope or output SRS must be ' +
+    #                            'specified.')
+    #
+    #     cmd = self._getBaseCmd()
+    #
+    #     # Clip?
+    #     if envelope:
+    #
+    #         if not isinstance(envelope, Envelope):
+    #             raise TypeError('The first parameter must be an Envelope.')
+    #
+    #         if not self.envelope().Intersection(envelope):
+    #
+    #             raise RuntimeError('The clip envelope does not intersect ' +
+    #                                'the image.')
+    #
+    #         cmd += (' -te' +
+    #                 ' ' + str(envelope.ulx()) +
+    #                 ' ' + str(envelope.lry()) +
+    #                 ' ' + str(envelope.lrx()) +
+    #                 ' ' + str(envelope.uly()) +
+    #                 ' -te_srs' +
+    #                 ' "' + envelope.GetSpatialReference().ExportToProj4() +
+    #                 '"')
+    #
+    #     # Reproject?
+    #     if outputSRS and not self._dataset.GetSpatialRef().IsSame(outputSRS):
+    #
+    #         cmd += ' -t_srs "' + outputSRS.ExportToProj4() + '"'
+    #         self._srs = outputSRS
+    #
+    #     # Finish the command.
+    #     outFile = tempfile.mkstemp()[1]
+    #     cmd += ' ' + dataset + ' ' + outFile
+    #     SystemCommand(cmd, self.logger, True)
+    #
+    #     shutil.move(outFile, self._filePath)
+    #
+    #     # ---
+    #     # Update the dataset.  It would be nice to use the SRS inside the
+    #     # reprojected file; however, if it is EPSG:4326, the axis order could
+    #     # be incorrect.  Passing the requested SRS keeps the axis order
+    #     # consistent.
+    #     # ---
+    #     self.__init__(self._filePath, spatialReference=outputSRS)
 
     # -------------------------------------------------------------------------
     # envelope
@@ -174,7 +261,7 @@ class GeospatialImageFile(ImageFile):
 
         return 'gdalwarp ' + \
                ' -multi' + \
-               ' -of netCDF' + \
+               ' -of ' + str(self._outputFormat) + \
                ' -s_srs "' + \
                self._dataset.GetSpatialRef().ExportToProj4() + \
                '"'
@@ -201,20 +288,31 @@ class GeospatialImageFile(ImageFile):
     # -------------------------------------------------------------------------
     # resample
     # -------------------------------------------------------------------------
+    # def resample(self, xScale, yScale):
+    #
+    #     cmd = self._getBaseCmd() + ' -tr ' + str(xScale) + ' ' + \
+    #         str(yScale)
+    #
+    #     # Finish the command.
+    #     outFile = tempfile.mkstemp(suffix='.nc')[1]
+    #     cmd += ' ' + self._filePath + ' ' + outFile
+    #     SystemCommand(cmd, None, True)
+    #     shutil.move(outFile, self._filePath)
+    #
+    #     # Update the dataset.
+    #     self.getDataset()
+
+    # -------------------------------------------------------------------------
+    # resample
+    # -------------------------------------------------------------------------
     def resample(self, xScale, yScale):
 
-        cmd = self._getBaseCmd() + ' -tr ' + str(xScale) + ' ' + \
-            str(yScale)
-
-        # Finish the command.
-        outFile = tempfile.mkstemp(suffix='.nc')[1]
-        cmd += ' ' + self._filePath + ' ' + outFile
-        SystemCommand(cmd, None, True)
-        shutil.move(outFile, self._filePath)
-
-        # Update the dataset.
-        self.getDataset()
-
+        warnings.warn('Use osgeo.gdal.Warp, instead.', 
+                      DeprecationWarning,
+                      stacklevel=2)
+                      
+        self.clipReproject(xScale=xScale, yScale=yScale)
+        
     # -------------------------------------------------------------------------
     # scale
     # -------------------------------------------------------------------------
