@@ -1,13 +1,14 @@
 # Innovation Lab's Core Applications
 
-## Release 2.1.0 (2022-07-08)
+## Release 2.3.0 (2023-07-07)
 
 ### <b> Release Highlights </b>
 
-- Refactored Celery and Redis controllers to become non-blocking
-- GeospatialImageFile improvements
-- Improved DgFile support
-- Improved FootprintsQuery
+- Added NotebookImageHelper (see PR https://github.com/nasa-nccs-hpda/core/pull/10 for info)
+- Made default executable shell for SystemCommand `/bin/bash`
+
+
+Still important:
 
 ## <b>Celery and Redis Use</b>
 
