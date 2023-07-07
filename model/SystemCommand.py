@@ -39,7 +39,8 @@ class SystemCommand(object):
                                    shell=True,
                                    stderr=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
-                                   close_fds=True)
+                                   close_fds=True,
+                                   executable='/bin/bash')
 
         self.returnCode = process.returncode
         stdOutStdErr = process.communicate()
